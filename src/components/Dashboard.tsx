@@ -30,10 +30,11 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <button
           onClick={() => onNavigate('billing')}
-          className="card-surface rounded-xl p-4 md:p-6 text-left hover:shadow-md transition-shadow group cursor-pointer bg-accent"
+          className="rounded-xl p-4 md:p-6 text-left hover:shadow-md transition-shadow group cursor-pointer"
+          style={{ background: 'hsl(var(--accent))', boxShadow: 'var(--shadow-card)' }}
         >
           <div className="text-accent-foreground font-semibold text-lg">New Bill</div>
-          <div className="text-accent-foreground/70 text-xs mt-1">Press <kbd className="hotkey bg-accent-foreground/10 text-accent-foreground/80 border-accent-foreground/20">N</kbd></div>
+          <div className="text-accent-foreground/70 text-xs mt-1">Press <kbd className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-medium rounded bg-white/20 text-accent-foreground border border-white/30">N</kbd></div>
         </button>
         <button onClick={() => onNavigate('customers')} className="card-surface rounded-xl p-4 md:p-6 text-left hover:shadow-md transition-shadow cursor-pointer">
           <div className="heading text-sm">Customers</div>
