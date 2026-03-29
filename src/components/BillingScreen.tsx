@@ -152,7 +152,7 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${mode === 'Retail' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
           >Retail</button>
           <button
-            onClick={() => setMode('Wholesale')}
+            onClick={() => { setMode('Wholesale'); setTimeout(() => customerSearchRef.current?.focus(), 100); }}
             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${mode === 'Wholesale' ? 'bg-accent text-accent-foreground' : 'bg-muted text-muted-foreground'}`}
           >Wholesale <kbd className="hotkey ml-1">Alt+W</kbd></button>
         </div>
