@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { seedDemoData } from '@/lib/seedData';
 import Dashboard from '@/components/Dashboard';
 import BillingScreen from '@/components/BillingScreen';
 import InventoryPage from '@/components/InventoryPage';
