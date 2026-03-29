@@ -17,6 +17,7 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
   const [billItems, setBillItems] = useState<InvoiceItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Cash');
   const [paidAmount, setPaidAmount] = useState('');
+  const [buyingForClient, setBuyingForClient] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
