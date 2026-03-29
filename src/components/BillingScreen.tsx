@@ -125,6 +125,7 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
     setBillItems([]);
     setSelectedCustomer(null);
     setPaidAmount('');
+    setBuyingForClient('');
     setSearch('');
     setItems(getItems());
   }, [billItems, selectedCustomer, mode, total, paid, paymentMethod, status, items]);
