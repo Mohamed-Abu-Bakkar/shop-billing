@@ -147,7 +147,8 @@ function PaymentForm({ customers, onSave, onClose }: {
               <button onClick={() => {
                 const a = parseFloat(amount);
                 if (!a || a <= 0) { toast.error('Enter valid amount'); return; }
-                onSave(custId, a, method);
+                if (!paymentDate) { toast.error('Select a date'); return; }
+                onSave(custId, a, method, paymentDate);
               }} className="px-4 py-2 rounded-lg text-sm bg-success text-success-foreground font-medium">
                 Record ₹{parseFloat(amount || '0').toLocaleString('en-IN')}
               </button>

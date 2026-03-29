@@ -183,10 +183,12 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
               ) : (
                 <div>
                   <input
+                    ref={customerSearchRef}
                     value={customerSearch}
                     onChange={e => setCustomerSearch(e.target.value)}
                     placeholder="Search customer by name or phone..."
                     className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                    autoFocus
                   />
                   {customerSearch && (
                     <div className="mt-1 card-elevated rounded-lg max-h-40 overflow-y-auto">
