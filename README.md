@@ -1,3 +1,3 @@
-# Welcome to your Lovable project
+# Shop Billing App
 
 TODO: Document your project here
