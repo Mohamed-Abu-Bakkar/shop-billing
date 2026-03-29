@@ -228,8 +228,8 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
 
           {/* Item list */}
           <div className="flex-1 overflow-y-auto">
-            {search ? (
-              filtered.map(item => (
+            {searchFocused || search ? (
+              (search ? filtered : items.slice(0, 30)).map(item => (
                 <button
                   key={item.id}
                   onClick={() => addToBill(item)}
@@ -249,7 +249,7 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
                 </button>
               ))
             ) : (
-              <div className="p-8 text-center text-muted-foreground text-sm">Type to search items</div>
+              <div className="p-8 text-center text-muted-foreground text-sm">Click search or start typing to see items</div>
             )}
           </div>
         </div>
