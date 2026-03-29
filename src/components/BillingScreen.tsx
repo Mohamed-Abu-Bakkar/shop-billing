@@ -17,6 +17,7 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
   const [billItems, setBillItems] = useState<InvoiceItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Cash');
   const [paidAmount, setPaidAmount] = useState('');
+  const [buyingForClient, setBuyingForClient] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -101,6 +102,7 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
       paidAmount: paid,
       paymentMethod,
       status: status as Invoice['status'],
+      buyingForClient: selectedCustomer?.isElectrician && buyingForClient.trim() ? buyingForClient.trim() : null,
       createdAt: new Date().toISOString(),
     };
 
@@ -123,6 +125,7 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
     setBillItems([]);
     setSelectedCustomer(null);
     setPaidAmount('');
+    setBuyingForClient('');
     setSearch('');
     setItems(getItems());
   }, [billItems, selectedCustomer, mode, total, paid, paymentMethod, status, items]);
@@ -194,6 +197,17 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
                       ))}
                     </div>
                   )}
+                </div>
+              )}
+              {selectedCustomer?.isElectrician && (
+                <div className="mt-2">
+                  <input
+                    value={buyingForClient}
+                    onChange={e => setBuyingForClient(e.target.value)}
+                    placeholder="Buying for client name (e.g. Ramesh - House wiring)"
+                    className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                  />
+                  <span className="text-xs text-muted-foreground mt-1 block">Track which client this electrician is buying for</span>
                 </div>
               )}
             </div>
