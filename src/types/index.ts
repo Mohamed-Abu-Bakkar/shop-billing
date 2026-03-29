@@ -51,6 +51,7 @@ export interface Invoice {
   paidAmount: number;
   paymentMethod: PaymentMethod;
   status: InvoiceStatus;
+  buyingForClient: string | null;
   createdAt: string;
 }
 
