@@ -190,7 +190,7 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
                     className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                     autoFocus
                   />
-                  {customerSearch && (
+                  {(
                     <div className="mt-1 card-elevated rounded-lg max-h-40 overflow-y-auto">
                       {filteredCustomers.map(c => (
                         <button key={c.id} onClick={() => { setSelectedCustomer(c); setCustomerSearch(''); }}
