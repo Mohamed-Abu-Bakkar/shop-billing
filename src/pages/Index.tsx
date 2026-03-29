@@ -12,6 +12,8 @@ type Page = 'dashboard' | 'billing' | 'inventory' | 'customers' | 'reports' | 'p
 const Index = () => {
   const [page, setPage] = useState<Page>('dashboard');
 
+  useEffect(() => { seedDemoData(); }, []);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'n' && !e.ctrlKey && !e.altKey && !e.metaKey && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
