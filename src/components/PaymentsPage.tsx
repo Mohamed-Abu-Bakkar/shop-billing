@@ -23,7 +23,7 @@ export default function PaymentsPage({ onBack }: PaymentsPageProps) {
     p.customerName.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handlePayment = (custId: string, amount: number, method: 'Cash' | 'UPI' | 'Mixed') => {
+  const handlePayment = (custId: string, amount: number, method: 'Cash' | 'UPI' | 'Mixed', date: string) => {
     const cust = customers.find(c => c.id === custId);
     if (!cust) return;
 
@@ -34,7 +34,7 @@ export default function PaymentsPage({ onBack }: PaymentsPageProps) {
       amount,
       method,
       invoiceId: null,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date(date).toISOString(),
     });
 
     updateCustomer({
