@@ -102,6 +102,7 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
       paidAmount: paid,
       paymentMethod,
       status: status as Invoice['status'],
+      buyingForClient: selectedCustomer?.isElectrician && buyingForClient.trim() ? buyingForClient.trim() : null,
       createdAt: new Date().toISOString(),
     };
 
