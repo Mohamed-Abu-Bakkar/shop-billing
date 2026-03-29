@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { seedDemoData } from '@/lib/seedData';
 import Dashboard from '@/components/Dashboard';
 import BillingScreen from '@/components/BillingScreen';
 import InventoryPage from '@/components/InventoryPage';
@@ -10,6 +11,8 @@ type Page = 'dashboard' | 'billing' | 'inventory' | 'customers' | 'reports' | 'p
 
 const Index = () => {
   const [page, setPage] = useState<Page>('dashboard');
+
+  useEffect(() => { seedDemoData(); }, []);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
