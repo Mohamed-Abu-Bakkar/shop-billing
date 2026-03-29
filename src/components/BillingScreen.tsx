@@ -221,6 +221,8 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
               ref={searchRef}
               value={search}
               onChange={e => setSearch(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
               onKeyDown={handleSearchKeyDown}
               placeholder="Search items... (Enter to add top result)"
               className="w-full px-4 py-3 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
