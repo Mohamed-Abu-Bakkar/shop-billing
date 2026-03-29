@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Customer, BehaviorScore } from '@/types';
-import { getCustomers, addCustomer, updateCustomer, getInvoices, generateId } from '@/lib/store';
+import { Customer, BehaviorScore, Payment } from '@/types';
+import { getCustomers, addCustomer, updateCustomer, getInvoices, generateId, addPayment, getCustomerPayments } from '@/lib/store';
 import { toast } from 'sonner';
 
 interface CustomersPageProps {
@@ -13,6 +13,9 @@ export default function CustomersPage({ onBack }: CustomersPageProps) {
   const [showForm, setShowForm] = useState(false);
   const [editCust, setEditCust] = useState<Customer | null>(null);
   const [selectedCust, setSelectedCust] = useState<Customer | null>(null);
+  const [showCreditForm, setShowCreditForm] = useState(false);
+  const [creditAmount, setCreditAmount] = useState('');
+  const [creditMethod, setCreditMethod] = useState<'Cash' | 'UPI'>('Cash');
 
   const reload = () => setCustomers(getCustomers());
   useEffect(reload, []);
@@ -29,8 +32,37 @@ export default function CustomersPage({ onBack }: CustomersPageProps) {
     setEditCust(null);
   };
 
+  const handleAddCredit = () => {
+    if (!selectedCust) return;
+    const amount = parseFloat(creditAmount);
+    if (!amount || amount <= 0) { toast.error('Enter valid amount'); return; }
+
+    const payment: Payment = {
+      id: generateId(),
+      customerId: selectedCust.id,
+      customerName: selectedCust.name,
+      amount,
+      method: creditMethod,
+      invoiceId: null,
+      createdAt: new Date().toISOString(),
+    };
+    addPayment(payment);
+    updateCustomer({
+      ...selectedCust,
+      totalPaid: selectedCust.totalPaid + amount,
+      totalCredit: Math.max(0, selectedCust.totalCredit - amount),
+    });
+    reload();
+    setCustomers(getCustomers());
+    setSelectedCust({ ...selectedCust, totalPaid: selectedCust.totalPaid + amount, totalCredit: Math.max(0, selectedCust.totalCredit - amount) });
+    setShowCreditForm(false);
+    setCreditAmount('');
+    toast.success(`₹${amount.toLocaleString('en-IN')} payment recorded`);
+  };
+
   const invoices = getInvoices();
   const custInvoices = selectedCust ? invoices.filter(i => i.customerId === selectedCust.id) : [];
+  const custPayments = selectedCust ? getCustomerPayments(selectedCust.id) : [];
 
   return (
     <div className="h-screen flex flex-col animate-slide-in">
@@ -68,15 +100,70 @@ export default function CustomersPage({ onBack }: CustomersPageProps) {
             </div>
           </div>
 
+          {/* Add Credit Button */}
+          {selectedCust.totalCredit > 0 && (
+            <button
+              onClick={() => setShowCreditForm(true)}
+              className="w-full py-3 rounded-lg bg-success text-success-foreground font-medium text-sm hover:opacity-90 transition-opacity"
+            >
+              + Receive Payment
+            </button>
+          )}
+
+          {/* Add Credit Form */}
+          {showCreditForm && (
+            <div className="card-surface rounded-xl p-4 space-y-3">
+              <h3 className="heading text-sm">Receive Payment</h3>
+              <input
+                type="number"
+                value={creditAmount}
+                onChange={e => setCreditAmount(e.target.value)}
+                placeholder="Amount ₹"
+                className="w-full px-3 py-2 rounded-lg border border-input text-sm mono-num focus:outline-none focus:ring-2 focus:ring-accent"
+                autoFocus
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCreditMethod('Cash')}
+                  className={`flex-1 py-2 rounded-md text-sm font-medium ${creditMethod === 'Cash' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+                >Cash</button>
+                <button
+                  onClick={() => setCreditMethod('UPI')}
+                  className={`flex-1 py-2 rounded-md text-sm font-medium ${creditMethod === 'UPI' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+                >UPI</button>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => { setShowCreditForm(false); setCreditAmount(''); }}
+                  className="px-3 py-2 rounded-lg text-sm bg-muted text-muted-foreground"
+                >Cancel</button>
+                <button
+                  onClick={handleAddCredit}
+                  className="px-3 py-2 rounded-lg text-sm bg-success text-success-foreground font-medium"
+                >Add Payment</button>
+              </div>
+            </div>
+          )}
+
           {/* Transaction history */}
           <div className="card-surface rounded-xl">
             <div className="p-4 border-b border-border">
               <h2 className="heading text-sm">Transaction History</h2>
             </div>
-            {custInvoices.length === 0 ? (
+            {custInvoices.length === 0 && custPayments.length === 0 ? (
               <div className="p-8 text-center text-muted-foreground text-sm">No transactions yet</div>
             ) : (
-              <div className="divide-y divide-border">
+              <div className="divide-y divide-border max-h-60 overflow-y-auto">
+                {custPayments.map(pay => (
+                  <div key={pay.id} className="px-4 py-3 flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-3">
+                      <span className="mono-num text-xs text-muted-foreground">PAY</span>
+                      <span className="text-xs text-muted-foreground">{new Date(pay.createdAt).toLocaleDateString('en-IN')}</span>
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-success/10 text-success">Payment</span>
+                    </div>
+                    <span className="mono-num font-semibold text-success">+₹{pay.amount.toLocaleString('en-IN')}</span>
+                  </div>
+                ))}
                 {custInvoices.map(inv => (
                   <div key={inv.id} className="px-4 py-3 flex items-center justify-between text-sm">
                     <div className="flex items-center gap-3">
