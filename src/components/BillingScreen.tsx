@@ -199,6 +199,17 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
                   )}
                 </div>
               )}
+              {selectedCustomer?.isElectrician && (
+                <div className="mt-2">
+                  <input
+                    value={buyingForClient}
+                    onChange={e => setBuyingForClient(e.target.value)}
+                    placeholder="Buying for client name (e.g. Ramesh - House wiring)"
+                    className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                  />
+                  <span className="text-xs text-muted-foreground mt-1 block">Track which client this electrician is buying for</span>
+                </div>
+              )}
             </div>
           )}
 
