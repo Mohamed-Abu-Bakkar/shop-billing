@@ -129,6 +129,11 @@ function PaymentForm({ customers, onSave, onClose }: {
             </div>
             <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Amount ₹"
               className="w-full px-3 py-2 rounded-lg border border-input text-sm mono-num focus:outline-none focus:ring-2 focus:ring-accent" autoFocus />
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Payment Date</label>
+              <input type="date" value={paymentDate} onChange={e => setPaymentDate(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+            </div>
             <div className="flex gap-1.5">
               {(['Cash', 'UPI', 'Mixed'] as const).map(m => (
                 <button key={m} onClick={() => setMethod(m)}
