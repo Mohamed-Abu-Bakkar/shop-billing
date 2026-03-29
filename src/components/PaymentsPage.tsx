@@ -93,6 +93,7 @@ function PaymentForm({ customers, onSave, onClose }: {
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState<'Cash' | 'UPI' | 'Mixed'>('Cash');
   const [custSearch, setCustSearch] = useState('');
+  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
 
   const withCredit = customers.filter(c => c.totalCredit > 0);
   const filtered = withCredit.filter(c =>
