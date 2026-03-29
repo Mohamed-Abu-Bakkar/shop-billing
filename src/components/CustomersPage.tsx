@@ -82,6 +82,11 @@ export default function CustomersPage({ onBack }: CustomersPageProps) {
                     <div className="flex items-center gap-3">
                       <span className="mono-num text-xs text-muted-foreground">{inv.invoiceNo}</span>
                       <span className="text-xs text-muted-foreground">{new Date(inv.createdAt).toLocaleDateString('en-IN')}</span>
+                      {inv.buyingForClient && (
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-accent/10 text-accent">
+                          For: {inv.buyingForClient}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-3">
                       <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
