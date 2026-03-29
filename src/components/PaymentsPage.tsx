@@ -86,7 +86,7 @@ export default function PaymentsPage({ onBack }: PaymentsPageProps) {
 
 function PaymentForm({ customers, onSave, onClose }: {
   customers: Customer[];
-  onSave: (custId: string, amount: number, method: 'Cash' | 'UPI' | 'Mixed') => void;
+  onSave: (custId: string, amount: number, method: 'Cash' | 'UPI' | 'Mixed', date: string) => void;
   onClose: () => void;
 }) {
   const [custId, setCustId] = useState('');
