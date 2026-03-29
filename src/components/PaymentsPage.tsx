@@ -23,7 +23,7 @@ export default function PaymentsPage({ onBack }: PaymentsPageProps) {
     p.customerName.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handlePayment = (custId: string, amount: number, method: 'Cash' | 'UPI' | 'Mixed') => {
+  const handlePayment = (custId: string, amount: number, method: 'Cash' | 'UPI' | 'Mixed', date: string) => {
     const cust = customers.find(c => c.id === custId);
     if (!cust) return;
 
@@ -34,7 +34,7 @@ export default function PaymentsPage({ onBack }: PaymentsPageProps) {
       amount,
       method,
       invoiceId: null,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date(date).toISOString(),
     });
 
     updateCustomer({
@@ -86,13 +86,14 @@ export default function PaymentsPage({ onBack }: PaymentsPageProps) {
 
 function PaymentForm({ customers, onSave, onClose }: {
   customers: Customer[];
-  onSave: (custId: string, amount: number, method: 'Cash' | 'UPI' | 'Mixed') => void;
+  onSave: (custId: string, amount: number, method: 'Cash' | 'UPI' | 'Mixed', date: string) => void;
   onClose: () => void;
 }) {
   const [custId, setCustId] = useState('');
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState<'Cash' | 'UPI' | 'Mixed'>('Cash');
   const [custSearch, setCustSearch] = useState('');
+  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
 
   const withCredit = customers.filter(c => c.totalCredit > 0);
   const filtered = withCredit.filter(c =>
@@ -128,6 +129,11 @@ function PaymentForm({ customers, onSave, onClose }: {
             </div>
             <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Amount ₹"
               className="w-full px-3 py-2 rounded-lg border border-input text-sm mono-num focus:outline-none focus:ring-2 focus:ring-accent" autoFocus />
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Payment Date</label>
+              <input type="date" value={paymentDate} onChange={e => setPaymentDate(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+            </div>
             <div className="flex gap-1.5">
               {(['Cash', 'UPI', 'Mixed'] as const).map(m => (
                 <button key={m} onClick={() => setMethod(m)}
@@ -141,7 +147,8 @@ function PaymentForm({ customers, onSave, onClose }: {
               <button onClick={() => {
                 const a = parseFloat(amount);
                 if (!a || a <= 0) { toast.error('Enter valid amount'); return; }
-                onSave(custId, a, method);
+                if (!paymentDate) { toast.error('Select a date'); return; }
+                onSave(custId, a, method, paymentDate);
               }} className="px-4 py-2 rounded-lg text-sm bg-success text-success-foreground font-medium">
                 Record ₹{parseFloat(amount || '0').toLocaleString('en-IN')}
               </button>

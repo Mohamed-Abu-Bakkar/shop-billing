@@ -18,7 +18,9 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Cash');
   const [paidAmount, setPaidAmount] = useState('');
   const [buyingForClient, setBuyingForClient] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+  const customerSearchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setItems(getItems());
@@ -150,7 +152,7 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${mode === 'Retail' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
           >Retail</button>
           <button
-            onClick={() => setMode('Wholesale')}
+            onClick={() => { setMode('Wholesale'); setTimeout(() => customerSearchRef.current?.focus(), 100); }}
             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${mode === 'Wholesale' ? 'bg-accent text-accent-foreground' : 'bg-muted text-muted-foreground'}`}
           >Wholesale <kbd className="hotkey ml-1">Alt+W</kbd></button>
         </div>
@@ -181,12 +183,14 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
               ) : (
                 <div>
                   <input
+                    ref={customerSearchRef}
                     value={customerSearch}
                     onChange={e => setCustomerSearch(e.target.value)}
                     placeholder="Search customer by name or phone..."
                     className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                    autoFocus
                   />
-                  {customerSearch && (
+                  {(
                     <div className="mt-1 card-elevated rounded-lg max-h-40 overflow-y-auto">
                       {filteredCustomers.map(c => (
                         <button key={c.id} onClick={() => { setSelectedCustomer(c); setCustomerSearch(''); }}
@@ -219,6 +223,8 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
               ref={searchRef}
               value={search}
               onChange={e => setSearch(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
               onKeyDown={handleSearchKeyDown}
               placeholder="Search items... (Enter to add top result)"
               className="w-full px-4 py-3 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
@@ -228,8 +234,8 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
 
           {/* Item list */}
           <div className="flex-1 overflow-y-auto">
-            {search ? (
-              filtered.map(item => (
+            {searchFocused || search ? (
+              (search ? filtered : items.slice(0, 30)).map(item => (
                 <button
                   key={item.id}
                   onClick={() => addToBill(item)}
@@ -249,7 +255,7 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
                 </button>
               ))
             ) : (
-              <div className="p-8 text-center text-muted-foreground text-sm">Type to search items</div>
+              <div className="p-8 text-center text-muted-foreground text-sm">Click search or start typing to see items</div>
             )}
           </div>
         </div>
