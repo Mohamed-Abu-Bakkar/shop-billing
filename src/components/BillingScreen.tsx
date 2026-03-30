@@ -222,13 +222,68 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
               )}
               {selectedCustomer?.isElectrician && (
                 <div className="mt-2">
-                  <input
-                    value={buyingForClient}
-                    onChange={e => setBuyingForClient(e.target.value)}
-                    placeholder="Buying for client name (e.g. Ramesh - House wiring)"
-                    className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-                  />
-                  <span className="text-xs text-muted-foreground mt-1 block">Track which client this electrician is buying for</span>
+                  {!showAddClient ? (
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          value={clientSearch}
+                          onChange={e => { setClientSearch(e.target.value); setBuyingForClient(''); }}
+                          placeholder="Search or select client..."
+                          className="flex-1 px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                        />
+                        <button onClick={() => setShowAddClient(true)} className="px-2 py-2 rounded-lg bg-accent text-accent-foreground text-xs font-medium whitespace-nowrap">+ New</button>
+                      </div>
+                      {buyingForClient && (
+                        <div className="mt-1 flex items-center gap-2 px-2 py-1.5 rounded-lg bg-accent/10 text-sm">
+                          <span className="text-accent font-medium">Client:</span>
+                          <span>{buyingForClient}</span>
+                          <button onClick={() => setBuyingForClient('')} className="ml-auto text-danger text-xs hover:underline">×</button>
+                        </div>
+                      )}
+                      {!buyingForClient && (
+                        <div className="mt-1 card-elevated rounded-lg max-h-32 overflow-y-auto">
+                          {clients.filter(cl => cl.name.toLowerCase().includes(clientSearch.toLowerCase())).map(cl => (
+                            <button key={cl.id} onClick={() => { setBuyingForClient(cl.name); setClientSearch(''); }}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex justify-between">
+                              <span>{cl.name}</span>
+                              <span className="text-xs text-muted-foreground">{cl.address}</span>
+                            </button>
+                          ))}
+                          {clients.filter(cl => cl.name.toLowerCase().includes(clientSearch.toLowerCase())).length === 0 && (
+                            <div className="p-2 text-center text-muted-foreground text-xs">No clients found. Click "+ New" to add.</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-2 p-3 rounded-lg border border-border bg-muted/30">
+                      <div className="text-xs font-semibold text-foreground">Add New Client</div>
+                      <input value={newClientName} onChange={e => setNewClientName(e.target.value)} placeholder="Client name *"
+                        className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" autoFocus />
+                      <input value={newClientPhone} onChange={e => setNewClientPhone(e.target.value)} placeholder="Phone (optional)"
+                        className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                      <input value={newClientAddress} onChange={e => setNewClientAddress(e.target.value)} placeholder="Address / Project details"
+                        className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                      <div className="flex justify-end gap-2">
+                        <button onClick={() => setShowAddClient(false)} className="px-3 py-1.5 rounded-md text-xs bg-muted text-muted-foreground">Cancel</button>
+                        <button onClick={() => {
+                          if (!newClientName.trim()) { toast.error('Client name required'); return; }
+                          const newCl: Client = {
+                            id: generateId(), customerId: selectedCustomer.id,
+                            name: newClientName.trim(), phone: newClientPhone.trim(),
+                            address: newClientAddress.trim(), createdAt: new Date().toISOString(),
+                          };
+                          addClient(newCl);
+                          setClients(prev => [...prev, newCl]);
+                          setBuyingForClient(newCl.name);
+                          setNewClientName(''); setNewClientPhone(''); setNewClientAddress('');
+                          setShowAddClient(false);
+                          toast.success(`Client "${newCl.name}" added`);
+                        }} className="px-3 py-1.5 rounded-md text-xs bg-accent text-accent-foreground font-medium">Add Client</button>
+                      </div>
+                    </div>
+                  )}
+                  <span className="text-xs text-muted-foreground mt-1 block">Select which client this electrician is buying for</span>
                 </div>
               )}
             </div>
