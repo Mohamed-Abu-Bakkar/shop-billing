@@ -1,4 +1,4 @@
-import { Item, Customer, Invoice, Payment } from '@/types';
+import { Item, Customer, Invoice, Payment, Client } from '@/types';
 
 function load<T>(key: string, fallback: T): T {
   try {
