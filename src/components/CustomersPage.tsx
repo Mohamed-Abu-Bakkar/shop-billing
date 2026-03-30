@@ -36,6 +36,34 @@ export default function CustomersPage({ onBack }: CustomersPageProps) {
     setEditCust(null);
   };
 
+  const handleAddCredit = () => {
+    if (!selectedCust) return;
+    const amount = parseFloat(creditAmount);
+    if (!amount || amount <= 0) { toast.error('Enter valid amount'); return; }
+
+    const payment: Payment = {
+      id: generateId(),
+      customerId: selectedCust.id,
+      customerName: selectedCust.name,
+      amount,
+      method: creditMethod,
+      invoiceId: null,
+      createdAt: new Date().toISOString(),
+    };
+    addPayment(payment);
+    updateCustomer({
+      ...selectedCust,
+      totalPaid: selectedCust.totalPaid + amount,
+      totalCredit: Math.max(0, selectedCust.totalCredit - amount),
+    });
+    reload();
+    setCustomers(getCustomers());
+    setSelectedCust({ ...selectedCust, totalPaid: selectedCust.totalPaid + amount, totalCredit: Math.max(0, selectedCust.totalCredit - amount) });
+    setShowCreditForm(false);
+    setCreditAmount('');
+    toast.success(`₹${amount.toLocaleString('en-IN')} payment recorded`);
+  };
+
   const invoices = getInvoices();
   const custInvoices = selectedCust ? invoices.filter(i => i.customerId === selectedCust.id) : [];
   const unpaidInvoices = custInvoices.filter(i => i.status !== 'Paid');
