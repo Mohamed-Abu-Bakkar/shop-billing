@@ -1,4 +1,4 @@
-import { Item, Customer, Invoice, Payment } from '@/types';
+import { Item, Customer, Invoice, Payment, Client } from '@/types';
 import { generateId } from './store';
 
 const id = generateId;
