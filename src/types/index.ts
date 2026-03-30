@@ -64,3 +64,12 @@ export interface Payment {
   invoiceId: string | null;
   createdAt: string;
 }
+
+export interface Client {
+  id: string;
+  customerId: string;
+  name: string;
+  phone: string;
+  address: string;
+  createdAt: string;
+}

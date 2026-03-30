@@ -1,4 +1,4 @@
-import { Item, Customer, Invoice, Payment } from '@/types';
+import { Item, Customer, Invoice, Payment, Client } from '@/types';
 import { generateId } from './store';
 
 const id = generateId;
@@ -103,6 +103,17 @@ const PAYMENTS: Payment[] = [
   { id: id(), customerId: 'cust7', customerName: 'Ganesh Hardware', amount: 8000, method: 'UPI', invoiceId: null, createdAt: makeDaysAgo(5) },
 ];
 
+const CLIENTS: Client[] = [
+  { id: 'cli1', customerId: 'cust1', name: 'Mr. Verma', phone: '9800000001', address: 'Sector 15, House wiring', createdAt: makeDaysAgo(30) },
+  { id: 'cli2', customerId: 'cust1', name: 'Sharma Residence', phone: '9800000002', address: 'MG Road, Rewiring project', createdAt: makeDaysAgo(20) },
+  { id: 'cli3', customerId: 'cust2', name: 'Green Valley Apartments', phone: '9800000003', address: 'NH Road, B Block', createdAt: makeDaysAgo(25) },
+  { id: 'cli4', customerId: 'cust2', name: 'Sunrise School', phone: '9800000004', address: 'School Road, New building wiring', createdAt: makeDaysAgo(15) },
+  { id: 'cli5', customerId: 'cust4', name: 'Patel Office', phone: '9800000005', address: 'Commercial Area, Renovation', createdAt: makeDaysAgo(10) },
+  { id: 'cli6', customerId: 'cust6', name: 'City Mall Project', phone: '9800000006', address: 'Ring Road, New construction', createdAt: makeDaysAgo(8) },
+  { id: 'cli7', customerId: 'cust6', name: 'Hotel Grand', phone: '9800000007', address: 'Station Road, Electrical maintenance', createdAt: makeDaysAgo(5) },
+  { id: 'cli8', customerId: 'cust8', name: 'Agarwal House', phone: '9800000008', address: 'Colony Road, Full house wiring', createdAt: makeDaysAgo(3) },
+];
+
 export function seedDemoData() {
   const hasData = localStorage.getItem('vl_items');
   if (hasData) return false;
@@ -111,5 +122,6 @@ export function seedDemoData() {
   localStorage.setItem('vl_customers', JSON.stringify(CUSTOMERS));
   localStorage.setItem('vl_invoices', JSON.stringify(INVOICES));
   localStorage.setItem('vl_payments', JSON.stringify(PAYMENTS));
+  localStorage.setItem('vl_clients', JSON.stringify(CLIENTS));
   return true;
 }

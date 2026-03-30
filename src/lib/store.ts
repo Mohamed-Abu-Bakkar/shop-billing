@@ -1,4 +1,4 @@
-import { Item, Customer, Invoice, Payment } from '@/types';
+import { Item, Customer, Invoice, Payment, Client } from '@/types';
 
 function load<T>(key: string, fallback: T): T {
   try {
@@ -31,6 +31,15 @@ export function addInvoice(inv: Invoice) { const all = getInvoices(); all.unshif
 // Payments
 export function getPayments(): Payment[] { return load('vl_payments', []); }
 export function addPayment(p: Payment) { const all = getPayments(); all.unshift(p); save('vl_payments', all); }
+
+// Clients
+export function getClients(): Client[] { return load('vl_clients', []); }
+export function getClientsByCustomer(customerId: string): Client[] { return getClients().filter(c => c.customerId === customerId); }
+export function addClient(c: Client) { const all = getClients(); all.push(c); save('vl_clients', all); }
+export function deleteClient(id: string) { save('vl_clients', getClients().filter(c => c.id !== id)); }
+
+// Invoice updates
+export function updateInvoice(inv: Invoice) { saveInvoices(getInvoices().map(i => i.id === inv.id ? inv : i)); }
 
 // Helpers
 export function generateId() { return Math.random().toString(36).substring(2, 10) + Date.now().toString(36); }
