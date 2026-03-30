@@ -22,9 +22,7 @@ export function generateId(): string {
 }
 
 export function generateInvoiceNo(): string {
-  const invoices = getInvoices();
-  const num = invoices.length + 1;
-  return `INV-${String(num).padStart(4, '0')}`;
+  return `INV-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
 }
 
 export async function initStore(): Promise<void> {

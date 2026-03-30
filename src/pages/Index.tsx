@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { seedDemoData } from '@/lib/seedData';
 import Dashboard from '@/components/Dashboard';
 import BillingScreen from '@/components/BillingScreen';
 import InventoryPage from '@/components/InventoryPage';
@@ -11,8 +10,6 @@ type Page = 'dashboard' | 'billing' | 'inventory' | 'customers' | 'reports' | 'p
 
 const Index = () => {
   const [page, setPage] = useState<Page>('dashboard');
-
-  useEffect(() => { seedDemoData(); }, []);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -35,7 +32,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card px-4 py-3 flex items-center justify-between">
-        <h1 className="heading text-lg tracking-tight">⚡ VoltLedger</h1>
+        <h1 className="heading text-lg tracking-tight">VoltLedger</h1>
         <span className="text-xs text-muted-foreground">Electrical Shop Billing</span>
       </header>
       <Dashboard onNavigate={(p) => setPage(p as Page)} />
