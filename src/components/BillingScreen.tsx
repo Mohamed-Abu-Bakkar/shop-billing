@@ -34,6 +34,17 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
     searchRef.current?.focus();
   }, []);
 
+  // Load clients when an electrician customer is selected
+  useEffect(() => {
+    if (selectedCustomer?.isElectrician) {
+      setClients(getClientsByCustomer(selectedCustomer.id));
+    } else {
+      setClients([]);
+    }
+    setBuyingForClient('');
+    setClientSearch('');
+  }, [selectedCustomer]);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.altKey && e.key === 'w') { e.preventDefault(); setMode(m => m === 'Retail' ? 'Wholesale' : 'Retail'); }
