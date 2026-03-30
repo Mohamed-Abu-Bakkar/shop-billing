@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Item, Customer, InvoiceItem, PaymentMethod, Invoice } from '@/types';
-import { getItems, getCustomers, updateItem, addInvoice, updateCustomer, generateId, generateInvoiceNo } from '@/lib/store';
+import { Item, Customer, InvoiceItem, PaymentMethod, Invoice, Client } from '@/types';
+import { getItems, getCustomers, updateItem, addInvoice, updateCustomer, generateId, generateInvoiceNo, getClientsByCustomer, addClient } from '@/lib/store';
 import { toast } from 'sonner';
 
 interface BillingScreenProps {
