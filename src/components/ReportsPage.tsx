@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getInvoices, getItems, getCustomers } from '@/lib/store';
 import { Invoice, Item } from '@/types';
+import BillTemplate from './BillTemplate';
 
 interface ReportsPageProps {
   onBack: () => void;
@@ -9,7 +10,8 @@ interface ReportsPageProps {
 export default function ReportsPage({ onBack }: ReportsPageProps) {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [items, setItems] = useState<Item[]>([]);
-  const [tab, setTab] = useState<'daily' | 'credit' | 'profit' | 'fast' | 'dead'>('daily');
+  const [tab, setTab] = useState<'daily' | 'credit' | 'profit' | 'fast' | 'dead' | 'invoices'>('daily');
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
   useEffect(() => {
     setInvoices(getInvoices());
@@ -52,6 +54,7 @@ export default function ReportsPage({ onBack }: ReportsPageProps) {
 
   const tabs = [
     { key: 'daily', label: 'Daily Sales' },
+    { key: 'invoices', label: 'All Invoices' },
     { key: 'credit', label: 'Credit' },
     { key: 'profit', label: 'Profit' },
     { key: 'fast', label: 'Fast Moving' },
@@ -105,6 +108,50 @@ export default function ReportsPage({ onBack }: ReportsPageProps) {
                       </div>
                       <span className="mono-num font-semibold">₹{inv.totalAmount.toLocaleString('en-IN')}</span>
                     </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {tab === 'invoices' && (
+          <div className="space-y-4">
+            <div className="card-surface rounded-xl">
+              <div className="p-4 border-b border-border heading text-sm">All Invoices ({invoices.length})</div>
+              {invoices.length === 0 ? (
+                <div className="p-6 text-center text-muted-foreground text-sm">No invoices found</div>
+              ) : (
+                <div className="divide-y divide-border max-h-96 overflow-y-auto">
+                  {invoices.map(inv => (
+                    <button key={inv.id} onClick={() => setSelectedInvoice(inv)}
+                      className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors flex justify-between items-center">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="mono-num font-semibold text-sm">{inv.invoiceNo}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                            inv.status === 'Paid' ? 'bg-success/10 text-success' :
+                            inv.status === 'Partial' ? 'bg-warning/10 text-warning' :
+                            'bg-danger/10 text-danger'
+                          }`}>{inv.status}</span>
+                        </div>
+                        <div className="text-sm text-muted-foreground mt-1">
+                          {inv.customerName || 'Walk-in Customer'}
+                          {inv.buyingForClient && ` • ${inv.buyingForClient}`}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(inv.createdAt).toLocaleDateString('en-IN')} • {inv.type}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="mono-num font-semibold">₹{inv.totalAmount.toLocaleString('en-IN')}</div>
+                        {inv.status !== 'Paid' && (
+                          <div className="text-xs text-warning">
+                            Due: ₹{(inv.totalAmount - inv.paidAmount).toLocaleString('en-IN')}
+                          </div>
+                        )}
+                      </div>
+                    </button>
                   ))}
                 </div>
               )}
@@ -181,6 +228,14 @@ export default function ReportsPage({ onBack }: ReportsPageProps) {
           </div>
         )}
       </div>
+
+      {/* Bill Template Modal */}
+      {selectedInvoice && (
+        <BillTemplate
+          invoice={selectedInvoice}
+          onClose={() => setSelectedInvoice(null)}
+        />
+      )}
     </div>
   );
 }

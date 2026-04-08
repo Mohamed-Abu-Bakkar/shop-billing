@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Item, Customer, InvoiceItem, PaymentMethod, Invoice, Client } from '@/types';
-import { getItems, getCustomers, updateItem, addInvoice, updateCustomer, generateId, generateInvoiceNo, getClientsByCustomer, addClient } from '@/lib/store';
+import { getItems, getCustomers, updateItem, addInvoice, updateCustomer, generateId, generateInvoiceNo, getClientsByCustomer, addClient, addCustomer } from '@/lib/store';
 import { toast } from 'sonner';
+import BillTemplate from './BillTemplate';
 
 interface BillingScreenProps {
   onBack: () => void;
@@ -21,10 +22,16 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
   const [clients, setClients] = useState<Client[]>([]);
   const [clientSearch, setClientSearch] = useState('');
   const [showAddClient, setShowAddClient] = useState(false);
+  const [showAddCustomer, setShowAddCustomer] = useState(false);
   const [newClientName, setNewClientName] = useState('');
   const [newClientPhone, setNewClientPhone] = useState('');
   const [newClientAddress, setNewClientAddress] = useState('');
+  const [newCustomerName, setNewCustomerName] = useState('');
+  const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [newCustomerIsElectrician, setNewCustomerIsElectrician] = useState(false);
+  const [newCustomerCreditLimit, setNewCustomerCreditLimit] = useState('50000');
   const [searchFocused, setSearchFocused] = useState(false);
+  const [savedInvoice, setSavedInvoice] = useState<Invoice | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const customerSearchRef = useRef<HTMLInputElement>(null);
 
@@ -141,6 +148,11 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
 
     addInvoice(inv);
     toast.success(`Invoice ${inv.invoiceNo} saved!`);
+
+    // Show bill template
+    setSavedInvoice(inv);
+
+    // Reset form
     setBillItems([]);
     setSelectedCustomer(null);
     setPaidAmount('');
@@ -199,23 +211,63 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
                 </div>
               ) : (
                 <div>
-                  <input
-                    ref={customerSearchRef}
-                    value={customerSearch}
-                    onChange={e => setCustomerSearch(e.target.value)}
-                    placeholder="Search customer by name or phone..."
-                    className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
-                    autoFocus
-                  />
-                  {(
-                    <div className="mt-1 card-elevated rounded-lg max-h-40 overflow-y-auto">
-                      {filteredCustomers.map(c => (
-                        <button key={c.id} onClick={() => { setSelectedCustomer(c); setCustomerSearch(''); }}
-                          className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex justify-between">
-                          <span>{c.name} <span className="text-muted-foreground">({c.phone})</span></span>
-                          <span className="mono-num text-xs text-muted-foreground">₹{c.totalCredit.toLocaleString('en-IN')}</span>
-                        </button>
-                      ))}
+                  {!showAddCustomer ? (
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          ref={customerSearchRef}
+                          value={customerSearch}
+                          onChange={e => setCustomerSearch(e.target.value)}
+                          placeholder="Search customer by name or phone..."
+                          className="flex-1 px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                          autoFocus
+                        />
+                        <button onClick={() => setShowAddCustomer(true)} className="px-2 py-2 rounded-lg bg-accent text-accent-foreground text-xs font-medium whitespace-nowrap">+ New</button>
+                      </div>
+                      {filteredCustomers.length > 0 && (
+                        <div className="mt-1 card-elevated rounded-lg max-h-40 overflow-y-auto">
+                          {filteredCustomers.map(c => (
+                            <button key={c.id} onClick={() => { setSelectedCustomer(c); setCustomerSearch(''); }}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex justify-between">
+                              <span>{c.name} <span className="text-muted-foreground">({c.phone})</span></span>
+                              <span className="mono-num text-xs text-muted-foreground">₹{c.totalCredit.toLocaleString('en-IN')}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-2 p-3 rounded-lg border border-border bg-muted/30">
+                      <div className="text-xs font-semibold text-foreground">Add New Customer</div>
+                      <input value={newCustomerName} onChange={e => setNewCustomerName(e.target.value)} placeholder="Customer name *"
+                        className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" autoFocus />
+                      <input value={newCustomerPhone} onChange={e => setNewCustomerPhone(e.target.value)} placeholder="Phone *"
+                        className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs text-muted-foreground">Electrician?</label>
+                        <input type="checkbox" checked={newCustomerIsElectrician} onChange={e => setNewCustomerIsElectrician(e.target.checked)}
+                          className="rounded" />
+                      </div>
+                      <input value={newCustomerCreditLimit} onChange={e => setNewCustomerCreditLimit(e.target.value)} placeholder="Credit limit"
+                        type="number" className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                      <div className="flex justify-end gap-2">
+                        <button onClick={() => { setNewCustomerName(''); setNewCustomerPhone(''); setNewCustomerIsElectrician(false); setNewCustomerCreditLimit('50000'); setShowAddCustomer(false); }} className="px-3 py-1.5 rounded-md text-xs bg-muted text-muted-foreground">Cancel</button>
+                        <button onClick={() => {
+                          if (!newCustomerName.trim()) { toast.error('Customer name required'); return; }
+                          if (!newCustomerPhone.trim()) { toast.error('Phone required'); return; }
+                          const newCust: Customer = {
+                            id: generateId(), name: newCustomerName.trim(), phone: newCustomerPhone.trim(),
+                            isElectrician: newCustomerIsElectrician, creditLimit: parseFloat(newCustomerCreditLimit) || 50000,
+                            totalCredit: 0, totalPaid: 0, behaviorScore: 'Good',
+                          };
+                          addCustomer(newCust);
+                          setCustomers(prev => [...prev, newCust]);
+                          setSelectedCustomer(newCust);
+                          setNewCustomerName(''); setNewCustomerPhone(''); setNewCustomerIsElectrician(false); setNewCustomerCreditLimit('50000');
+                          setShowAddCustomer(false);
+                          toast.success(`Customer "${newCust.name}" added`);
+                        }} className="px-3 py-1.5 rounded-md text-xs bg-accent text-accent-foreground font-medium">Add Customer</button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -436,6 +488,14 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
           </div>
         </div>
       </div>
+
+      {/* Bill Template Modal */}
+      {savedInvoice && (
+        <BillTemplate
+          invoice={savedInvoice}
+          onClose={() => setSavedInvoice(null)}
+        />
+      )}
     </div>
   );
 }

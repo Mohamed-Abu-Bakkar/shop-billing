@@ -1,4 +1,5 @@
 import { Item, Customer, Invoice, Payment, Client } from '@/types';
+import * as db from './db';
 
 export function getItems(): Item[] { return db.getItems(); }
 export function addItem(item: Item) { db.addItem(item); }
@@ -21,16 +22,15 @@ export function generateId(): string {
 }
 
 // Clients
-export function getClients(): Client[] { return load('vl_clients', []); }
-export function getClientsByCustomer(customerId: string): Client[] { return getClients().filter(c => c.customerId === customerId); }
-export function addClient(c: Client) { const all = getClients(); all.push(c); save('vl_clients', all); }
-export function deleteClient(id: string) { save('vl_clients', getClients().filter(c => c.id !== id)); }
+export function getClients(): Client[] { return db.getClients(); }
+export function getClientsByCustomer(customerId: string): Client[] { return db.getClientsByCustomer(customerId); }
+export function addClient(c: Client) { db.addClient(c); }
+export function deleteClient(id: string) { db.deleteClient(id); }
 
 // Invoice updates
-export function updateInvoice(inv: Invoice) { saveInvoices(getInvoices().map(i => i.id === inv.id ? inv : i)); }
+export function updateInvoice(inv: Invoice) { db.saveInvoices(getInvoices().map(i => i.id === inv.id ? inv : i)); }
 
 // Helpers
-export function generateId() { return Math.random().toString(36).substring(2, 10) + Date.now().toString(36); }
 export function generateInvoiceNo() {
   const invoices = getInvoices();
   const num = invoices.length + 1;

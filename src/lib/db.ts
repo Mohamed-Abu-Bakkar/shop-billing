@@ -1,4 +1,4 @@
-import { Item, Customer, Invoice, Payment } from '@/types';
+import { Item, Customer, Invoice, Payment, Client } from '@/types';
 
 const ITEMS_KEY = 'vl_items';
 const CUSTOMERS_KEY = 'vl_customers';
@@ -117,3 +117,24 @@ export const getCustomerPayments = (customerId: string): Payment[] =>
   loadData<Payment>(PAYMENTS_KEY)
     .filter(p => p.customerId === customerId)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+// Re-export helpers
+export const load = loadData;
+export const save = saveData;
+
+// Clients
+const CLIENTS_KEY = 'vl_clients';
+
+export const getClients = (): Client[] => loadData<Client>(CLIENTS_KEY);
+export const addClient = (client: Client): void => {
+  const clients = loadData<Client>(CLIENTS_KEY);
+  clients.push(client);
+  saveData(CLIENTS_KEY, clients);
+};
+export const getClientsByCustomer = (customerId: string): Client[] => 
+  getClients().filter(c => c.customerId === customerId);
+export const deleteClient = (id: string): void => {
+  const clients = loadData<Client>(CLIENTS_KEY).filter(c => c.id !== id);
+  saveData(CLIENTS_KEY, clients);
+};
+export const saveInvoices = (invoices: Invoice[]): void => saveData(INVOICES_KEY, invoices);
