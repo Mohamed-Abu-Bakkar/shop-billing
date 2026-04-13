@@ -17,9 +17,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
       manifest: {
-        name: 'VoltLedger - Billing App',
-        short_name: 'VoltLedger',
-        description: 'Electrical Shop Billing Application',
+        name: 'Sri Mahalingam Electricals - Billing App',
+        short_name: 'Sri Mahalingam Electricals',
+        description: 'Electrical & Hardware Store Billing Application',
         theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',

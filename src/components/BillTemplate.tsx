@@ -40,11 +40,11 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
             <div className="flex justify-between items-start">
               {type === 'bill' && (
                 <div>
-                  <h1 className="text-3xl font-bold text-primary mb-2">VoltLedger</h1>
-                  <p className="text-lg text-gray-600 mb-1">Electrical Shop Billing System</p>
-                  <p className="text-sm text-gray-500">GSTIN: 22AAAAA0000A1Z5</p>
-                  <p className="text-sm text-gray-500">Phone: +91 98765 43210</p>
-                  <p className="text-sm text-gray-500">Email: info@voltledger.com</p>
+                  <h1 className="text-3xl font-bold text-primary mb-2">Sri Mahalingam Electricals</h1>
+                  <p className="text-lg text-gray-600 mb-1">Electrical & Hardware Store</p>
+                  <p className="text-sm text-gray-500">GSTIN: 33ADWPJ5940P1ZR</p>
+                  <p className="text-sm text-gray-500">Phone: 99421 94751</p>
+                  <p className="text-sm text-gray-500">Email: jaimaha772@gmail.com</p>
                 </div>
               )}
               {type === 'quotation' && (
@@ -226,7 +226,7 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
                       <li>• Goods once sold will not be taken back</li>
                       <li>• Warranty as per manufacturer terms</li>
                       <li>• Payment due within 30 days for credit customers</li>
-                      <li>• Subject to local jurisdiction</li>
+                      {/* <li>• Subject to local jurisdiction</li> */}
                     </>
                   ) : (
                     <>
