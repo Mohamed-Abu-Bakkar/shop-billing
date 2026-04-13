@@ -135,37 +135,43 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
 
     const inv: Invoice = {
       id: generateId(),
-      invoiceNo: generateInvoiceNo(),
+      invoiceNo: templateType === 'quotation' ? `QT-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}` : generateInvoiceNo(),
       type: mode,
       customerId: selectedCustomer?.id || null,
       customerName: selectedCustomer?.name || null,
       items: billItems,
       totalAmount: total,
-      paidAmount: paid,
-      paymentMethod,
-      status: status as Invoice['status'],
+      paidAmount: templateType === 'quotation' ? 0 : paid,
+      paymentMethod: templateType === 'quotation' ? 'Cash' : paymentMethod,
+      status: templateType === 'quotation' ? 'Unpaid' : (status as Invoice['status']),
       buyingForClient: selectedCustomer?.isElectrician && buyingForClient.trim() ? buyingForClient.trim() : null,
       createdAt: new Date().toISOString(),
     };
 
-    // Update stock
-    billItems.forEach(bi => {
-      const item = items.find(i => i.id === bi.itemId);
-      if (item) {
-        updateItem({ ...item, stock: item.stock - bi.qty, lastSoldAt: new Date().toISOString() });
-      }
-    });
+    if (templateType === 'bill') {
+      // Only save to database and update stock/credit for actual bills
+      // Update stock
+      billItems.forEach(bi => {
+        const item = items.find(i => i.id === bi.itemId);
+        if (item) {
+          updateItem({ ...item, stock: item.stock - bi.qty, lastSoldAt: new Date().toISOString() });
+        }
+      });
 
-    // Update customer credit
-    if (selectedCustomer && status !== 'Paid') {
-      const unpaid = total - paid;
-      updateCustomer({ ...selectedCustomer, totalCredit: selectedCustomer.totalCredit + unpaid });
+      // Update customer credit
+      if (selectedCustomer && status !== 'Paid') {
+        const unpaid = total - paid;
+        updateCustomer({ ...selectedCustomer, totalCredit: selectedCustomer.totalCredit + unpaid });
+      }
+
+      addInvoice(inv);
+      toast.success(`Invoice ${inv.invoiceNo} saved!`);
+    } else {
+      // For quotations, just show the template without saving
+      toast.success(`Quotation ${inv.invoiceNo} generated!`);
     }
 
-    addInvoice(inv);
-    toast.success(`Invoice ${inv.invoiceNo} saved!`);
-
-    // Show bill template
+    // Show template
     setSavedInvoice(inv);
 
     // Reset form
@@ -175,7 +181,7 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
     setBuyingForClient('');
     setSearch('');
     setItems(getItems());
-  }, [billItems, selectedCustomer, mode, total, paid, paymentMethod, status, items]);
+  }, [billItems, selectedCustomer, mode, total, paid, paymentMethod, status, items, templateType]);
 
   const handleSearchKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && filtered.length > 0) {
