@@ -4,9 +4,10 @@ import { getItems } from '@/lib/store';
 interface BillTemplateProps {
   invoice: Invoice;
   onClose: () => void;
+  type?: 'bill' | 'quotation';
 }
 
-export default function BillTemplate({ invoice, onClose }: BillTemplateProps) {
+export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTemplateProps) {
   const items = getItems();
 
   const formatDate = (dateString: string) => {
@@ -37,21 +38,36 @@ export default function BillTemplate({ invoice, onClose }: BillTemplateProps) {
           {/* Header */}
           <div className="border-b-4 border-primary pb-6 mb-6 print:border-b-2">
             <div className="flex justify-between items-start">
-              <div>
-                <h1 className="text-3xl font-bold text-primary mb-2">VoltLedger</h1>
-                <p className="text-lg text-gray-600 mb-1">Electrical Shop Billing System</p>
-                <p className="text-sm text-gray-500">GSTIN: 22AAAAA0000A1Z5</p>
-                <p className="text-sm text-gray-500">Phone: +91 98765 43210</p>
-                <p className="text-sm text-gray-500">Email: info@voltledger.com</p>
-              </div>
+              {type === 'bill' && (
+                <div>
+                  <h1 className="text-3xl font-bold text-primary mb-2">VoltLedger</h1>
+                  <p className="text-lg text-gray-600 mb-1">Electrical Shop Billing System</p>
+                  <p className="text-sm text-gray-500">GSTIN: 22AAAAA0000A1Z5</p>
+                  <p className="text-sm text-gray-500">Phone: +91 98765 43210</p>
+                  <p className="text-sm text-gray-500">Email: info@voltledger.com</p>
+                </div>
+              )}
+              {type === 'quotation' && (
+                <div>
+                  <h1 className="text-3xl font-bold text-primary mb-2">QUOTATION</h1>
+                  <p className="text-lg text-gray-600 mb-1">Electrical Materials Estimate</p>
+                </div>
+              )}
               <div className="text-right">
-                <div className="text-4xl font-bold text-primary mb-2">{invoice.invoiceNo}</div>
+                <div className="text-4xl font-bold text-primary mb-2">
+                  {type === 'quotation' ? `QT-${invoice.invoiceNo.replace('INV-', '')}` : invoice.invoiceNo}
+                </div>
                 <div className="text-sm text-gray-600">
                   <div>Date: {formatDate(invoice.createdAt)}</div>
                   <div>Type: <span className="font-semibold">{invoice.type}</span></div>
-                  <div>Status: <span className={`font-semibold ${invoice.status === 'Paid' ? 'text-green-600' : invoice.status === 'Partial' ? 'text-yellow-600' : 'text-red-600'}`}>
-                    {invoice.status}
-                  </span></div>
+                  {type === 'bill' && (
+                    <div>Status: <span className={`font-semibold ${invoice.status === 'Paid' ? 'text-green-600' : invoice.status === 'Partial' ? 'text-yellow-600' : 'text-red-600'}`}>
+                      {invoice.status}
+                    </span></div>
+                  )}
+                  {type === 'quotation' && (
+                    <div className="text-blue-600 font-semibold">Valid for 30 days</div>
+                  )}
                 </div>
               </div>
             </div>
@@ -82,20 +98,39 @@ export default function BillTemplate({ invoice, onClose }: BillTemplateProps) {
               </div>
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-3 text-gray-800">Payment Details:</h3>
-              <div className="space-y-1">
-                <p className="text-sm text-gray-600">
-                  <span className="font-medium">Method:</span> {invoice.paymentMethod}
-                </p>
-                <p className="text-sm text-gray-600">
-                  <span className="font-medium">Paid:</span> {formatCurrency(invoice.paidAmount)}
-                </p>
-                {invoice.status !== 'Paid' && (
-                  <p className="text-sm text-red-600 font-medium">
-                    Due: {formatCurrency(invoice.totalAmount - invoice.paidAmount)}
-                  </p>
-                )}
-              </div>
+              {type === 'bill' ? (
+                <>
+                  <h3 className="text-lg font-semibold mb-3 text-gray-800">Payment Details:</h3>
+                  <div className="space-y-1">
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">Method:</span> {invoice.paymentMethod}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">Paid:</span> {formatCurrency(invoice.paidAmount)}
+                    </p>
+                    {invoice.status !== 'Paid' && (
+                      <p className="text-sm text-red-600 font-medium">
+                        Due: {formatCurrency(invoice.totalAmount - invoice.paidAmount)}
+                      </p>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-lg font-semibold mb-3 text-gray-800">Quotation Details:</h3>
+                  <div className="space-y-1">
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">Estimate for:</span> {invoice.customerName || 'Customer'}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">Valid till:</span> {formatDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString())}
+                    </p>
+                    <p className="text-sm text-blue-600 font-medium">
+                      Subject to material availability and market rates
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -166,17 +201,26 @@ export default function BillTemplate({ invoice, onClose }: BillTemplateProps) {
                   </div>
                 )}
                 <div className="flex justify-between text-lg font-bold border-t border-gray-300 pt-2">
-                  <span>Total Amount:</span>
+                  <span>{type === 'quotation' ? 'Estimated Total:' : 'Total Amount:'}</span>
                   <span>{formatCurrency(invoice.totalAmount)}</span>
                 </div>
-                <div className="flex justify-between text-green-600 font-semibold">
-                  <span>Amount Paid:</span>
-                  <span>{formatCurrency(invoice.paidAmount)}</span>
-                </div>
-                {invoice.totalAmount > invoice.paidAmount && (
-                  <div className="flex justify-between text-red-600 font-semibold border-t border-gray-300 pt-2">
-                    <span>Balance Due:</span>
-                    <span>{formatCurrency(invoice.totalAmount - invoice.paidAmount)}</span>
+                {type === 'bill' && (
+                  <>
+                    <div className="flex justify-between text-green-600 font-semibold">
+                      <span>Amount Paid:</span>
+                      <span>{formatCurrency(invoice.paidAmount)}</span>
+                    </div>
+                    {invoice.totalAmount > invoice.paidAmount && (
+                      <div className="flex justify-between text-red-600 font-semibold border-t border-gray-300 pt-2">
+                        <span>Balance Due:</span>
+                        <span>{formatCurrency(invoice.totalAmount - invoice.paidAmount)}</span>
+                      </div>
+                    )}
+                  </>
+                )}
+                {type === 'quotation' && (
+                  <div className="text-center text-sm text-blue-600 font-medium mt-2 pt-2 border-t border-gray-300">
+                    This is an estimate only. Final prices may vary based on market conditions.
                   </div>
                 )}
               </div>
@@ -189,10 +233,22 @@ export default function BillTemplate({ invoice, onClose }: BillTemplateProps) {
               <div>
                 <h4 className="font-semibold mb-2">Terms & Conditions:</h4>
                 <ul className="space-y-1 text-xs">
-                  <li>• Goods once sold will not be taken back</li>
-                  <li>• Warranty as per manufacturer terms</li>
-                  <li>• Payment due within 30 days for credit customers</li>
-                  <li>• Subject to local jurisdiction</li>
+                  {type === 'bill' ? (
+                    <>
+                      <li>• Goods once sold will not be taken back</li>
+                      <li>• Warranty as per manufacturer terms</li>
+                      <li>• Payment due within 30 days for credit customers</li>
+                      <li>• Subject to local jurisdiction</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>• This is an estimate only, not a firm quotation</li>
+                      <li>• Prices are subject to change based on market conditions</li>
+                      <li>• Final prices will be confirmed at the time of purchase</li>
+                      <li>• Estimate valid for 30 days from issue date</li>
+                      <li>• Subject to material availability</li>
+                    </>
+                  )}
                 </ul>
               </div>
               <div className="text-right">
@@ -202,7 +258,7 @@ export default function BillTemplate({ invoice, onClose }: BillTemplateProps) {
                 </div>
                 <div className="text-xs text-gray-500">
                   <p>Generated by VoltLedger v1.0</p>
-                  <p>Thank you for your business!</p>
+                  <p>{type === 'quotation' ? 'We look forward to serving you!' : 'Thank you for your business!'}</p>
                 </div>
               </div>
             </div>

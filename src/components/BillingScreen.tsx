@@ -10,6 +10,7 @@ interface BillingScreenProps {
 
 export default function BillingScreen({ onBack }: BillingScreenProps) {
   const [mode, setMode] = useState<'Retail' | 'Wholesale'>('Retail');
+  const [templateType, setTemplateType] = useState<'bill' | 'quotation'>('bill');
   const [items, setItems] = useState<Item[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState('');
@@ -188,9 +189,22 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
       <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card">
         <div className="flex items-center gap-3">
           <button onClick={onBack} className="text-muted-foreground hover:text-foreground text-sm">← Back</button>
-          <h1 className="heading text-base">New Bill</h1>
+          <h1 className="heading text-base">New {templateType === 'bill' ? 'Bill' : 'Quotation'}</h1>
         </div>
         <div className="flex items-center gap-2">
+          {/* Template Type Toggle */}
+          <div className="flex bg-muted rounded-md p-0.5">
+            <button
+              onClick={() => setTemplateType('bill')}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${templateType === 'bill' ? 'bg-white text-gray-900 shadow-sm' : 'text-muted-foreground'}`}
+            >Bill</button>
+            <button
+              onClick={() => setTemplateType('quotation')}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${templateType === 'quotation' ? 'bg-white text-gray-900 shadow-sm' : 'text-muted-foreground'}`}
+            >Quotation</button>
+          </div>
+
+          {/* Mode Toggle */}
           <button
             onClick={() => setMode('Retail')}
             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${mode === 'Retail' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
@@ -511,7 +525,7 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
               onClick={handleSave}
               className="w-full py-3 rounded-lg bg-accent text-accent-foreground font-semibold text-sm hover:opacity-90 transition-opacity"
             >
-              Save & Print <kbd className="hotkey ml-2 bg-accent-foreground/20 border-accent-foreground/30 text-accent-foreground/80">F5</kbd>
+              Save & Print {templateType === 'quotation' ? 'Quotation' : 'Bill'} <kbd className="hotkey ml-2 bg-accent-foreground/20 border-accent-foreground/30 text-accent-foreground/80">F5</kbd>
             </button>
           </div>
         </div>
@@ -522,6 +536,7 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
         <BillTemplate
           invoice={savedInvoice}
           onClose={() => setSavedInvoice(null)}
+          type={templateType}
         />
       )}
     </div>
