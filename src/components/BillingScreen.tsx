@@ -135,7 +135,7 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
 
     const inv: Invoice = {
       id: generateId(),
-      invoiceNo: templateType === 'quotation' ? `QT-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}` : generateInvoiceNo(),
+      invoiceNo: templateType === 'quotation' ? `QUOTATION-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}` : generateInvoiceNo(),
       type: mode,
       customerId: selectedCustomer?.id || null,
       customerName: selectedCustomer?.name || null,
