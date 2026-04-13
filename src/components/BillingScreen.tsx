@@ -31,6 +31,7 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
   const [newCustomerIsElectrician, setNewCustomerIsElectrician] = useState(false);
   const [newCustomerCreditLimit, setNewCustomerCreditLimit] = useState('50000');
   const [searchFocused, setSearchFocused] = useState(false);
+  const [isClickingItem, setIsClickingItem] = useState(false);
   const [savedInvoice, setSavedInvoice] = useState<Invoice | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const customerSearchRef = useRef<HTMLInputElement>(null);
@@ -88,11 +89,25 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
       }]);
     }
     setSearch('');
-    searchRef.current?.focus();
+    setIsClickingItem(false);
+    // Keep search focused and dropdown open for continuous adding
+    setTimeout(() => {
+      searchRef.current?.focus();
+      setSearchFocused(true);
+    }, 100);
   };
 
   const updateQty = (itemId: string, delta: number) => {
     setBillItems(prev => prev.map(b => b.itemId === itemId ? { ...b, qty: Math.max(1, b.qty + delta) } : b));
+  };
+
+  const setQty = (itemId: string, qty: number) => {
+    const newQty = Math.max(0, qty);
+    if (newQty === 0) {
+      removeFromBill(itemId);
+    } else {
+      setBillItems(prev => prev.map(b => b.itemId === itemId ? { ...b, qty: newQty } : b));
+    }
   };
 
   const removeFromBill = (itemId: string) => {
@@ -348,7 +363,12 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
               value={search}
               onChange={e => setSearch(e.target.value)}
               onFocus={() => setSearchFocused(true)}
-              onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+              onBlur={() => {
+                // Don't close dropdown immediately if clicking on an item
+                if (!isClickingItem) {
+                  setTimeout(() => setSearchFocused(false), 200);
+                }
+              }}
               onKeyDown={handleSearchKeyDown}
               placeholder="Search items... (Enter to add top result)"
               className="w-full px-4 py-3 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
@@ -362,6 +382,8 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
               (search ? filtered : items.slice(0, 30)).map(item => (
                 <button
                   key={item.id}
+                  onMouseDown={() => setIsClickingItem(true)}
+                  onMouseUp={() => setIsClickingItem(false)}
                   onClick={() => addToBill(item)}
                   className="w-full text-left px-4 py-2.5 border-b border-border hover:bg-muted/50 transition-colors flex items-center justify-between text-sm"
                 >
@@ -403,7 +425,13 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
                     </div>
                     <div className="flex items-center gap-2 mt-1.5">
                       <button onClick={() => updateQty(bi.itemId, -1)} className="w-6 h-6 rounded bg-muted text-foreground text-xs flex items-center justify-center hover:bg-secondary">−</button>
-                      <span className="mono-num text-xs w-8 text-center">{bi.qty}</span>
+                      <input
+                        type="number"
+                        value={bi.qty}
+                        onChange={e => setQty(bi.itemId, parseInt(e.target.value) || 0)}
+                        className="mono-num text-xs w-12 px-1 py-1 text-center rounded bg-muted border border-input focus:outline-none focus:ring-1 focus:ring-accent"
+                        min="0"
+                      />
                       <button onClick={() => updateQty(bi.itemId, 1)} className="w-6 h-6 rounded bg-muted text-foreground text-xs flex items-center justify-center hover:bg-secondary">+</button>
                       <span className="text-muted-foreground text-xs mx-1">×</span>
                       {mode === 'Wholesale' ? (
