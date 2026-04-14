@@ -1,21 +1,15 @@
-import { useState, useEffect, useMemo } from 'react';
-import { getInvoices, getCustomers, getItems } from '@/lib/store';
+import { useQuery } from 'convex/react';
 import { Invoice } from '@/types';
+import { shopApi } from '@/lib/convex';
 
 interface DashboardProps {
   onNavigate: (page: string) => void;
 }
 
 export default function Dashboard({ onNavigate }: DashboardProps) {
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [customerCount, setCustomerCount] = useState(0);
-  const [itemCount, setItemCount] = useState(0);
-
-  useEffect(() => {
-    setInvoices(getInvoices());
-    setCustomerCount(getCustomers().length);
-    setItemCount(getItems().length);
-  }, []);
+  const invoices = (useQuery(shopApi.listInvoices, {}) ?? []) as Invoice[];
+  const customerCount = ((useQuery(shopApi.listCustomers, {}) ?? []) as unknown[]).length;
+  const itemCount = ((useQuery(shopApi.listItems, {}) ?? []) as unknown[]).length;
 
   const today = new Date().toDateString();
   const todayInvoices = invoices.filter(i => new Date(i.createdAt).toDateString() === today);

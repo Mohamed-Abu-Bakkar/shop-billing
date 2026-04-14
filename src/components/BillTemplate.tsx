@@ -1,5 +1,6 @@
 import { Invoice, Item } from '@/types';
-import { getItems } from '@/lib/store';
+import { useQuery } from 'convex/react';
+import { shopApi } from '@/lib/convex';
 
 interface BillTemplateProps {
   invoice: Invoice;
@@ -8,7 +9,7 @@ interface BillTemplateProps {
 }
 
 export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTemplateProps) {
-  const items = getItems();
+  const items = (useQuery(shopApi.listItems, {}) ?? []) as Item[];
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-IN', {

@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { Item, Category, Unit } from '@/types';
-import { getItems, addItem, updateItem, deleteItem, generateId } from '@/lib/store';
+import { generateId } from '@/lib/shop';
+import { shopApi } from '@/lib/convex';
 import { toast } from 'sonner';
 
 interface InventoryPageProps {
@@ -11,14 +13,14 @@ const CATEGORIES: Category[] = ['Wire', 'Switch', 'Bulb', 'Fan', 'Motor', 'PVC',
 const UNITS: Unit[] = ['pc', 'mtr', 'box', 'pkt'];
 
 export default function InventoryPage({ onBack }: InventoryPageProps) {
-  const [items, setItems] = useState<Item[]>([]);
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editItem, setEditItem] = useState<Item | null>(null);
   const [filter, setFilter] = useState<'all' | 'low' | 'dead'>('all');
-
-  const reload = () => setItems(getItems());
-  useEffect(reload, []);
+  const items = (useQuery(shopApi.listItems, {}) ?? []) as Item[];
+  const createItem = useMutation(shopApi.createItem);
+  const saveItem = useMutation(shopApi.updateItem);
+  const removeItem = useMutation(shopApi.deleteItem);
 
   const filtered = items.filter(i => {
     const matchSearch = i.name.toLowerCase().includes(search.toLowerCase()) || i.brand.toLowerCase().includes(search.toLowerCase());
@@ -30,18 +32,21 @@ export default function InventoryPage({ onBack }: InventoryPageProps) {
     return matchSearch;
   });
 
-  const handleSave = (item: Item) => {
-    if (editItem) { updateItem(item); toast.success('Item updated'); }
-    else { addItem(item); toast.success('Item added'); }
-    reload();
+  const handleSave = async (item: Item) => {
+    if (editItem) {
+      await saveItem({ item });
+      toast.success('Item updated');
+    } else {
+      await createItem({ item });
+      toast.success('Item added');
+    }
     setShowForm(false);
     setEditItem(null);
   };
 
-  const handleDelete = (id: string) => {
-    deleteItem(id);
+  const handleDelete = async (id: string) => {
+    await removeItem({ id });
     toast('Item deleted', { action: { label: 'Undo', onClick: () => { /* simplified */ } } });
-    reload();
   };
 
   return (

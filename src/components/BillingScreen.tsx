@@ -1,6 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Item, Customer, InvoiceItem, PaymentMethod, Invoice, Client } from '@/types';
-import { getItems, getCustomers, updateItem, addInvoice, updateCustomer, generateId, generateInvoiceNo, getClientsByCustomer, addClient, addCustomer } from '@/lib/store';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
+import { Client, Customer, Invoice, InvoiceItem, Item, PaymentMethod } from '@/types';
+import { generateId } from '@/lib/shop';
+import { shopApi } from '@/lib/convex';
 import { toast } from 'sonner';
 import BillTemplate from './BillTemplate';
 
@@ -11,16 +13,13 @@ interface BillingScreenProps {
 export default function BillingScreen({ onBack }: BillingScreenProps) {
   const [mode, setMode] = useState<'Retail' | 'Wholesale'>('Retail');
   const [templateType, setTemplateType] = useState<'bill' | 'quotation'>('bill');
-  const [items, setItems] = useState<Item[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [billItems, setBillItems] = useState<InvoiceItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Cash');
   const [paidAmount, setPaidAmount] = useState('');
   const [buyingForClient, setBuyingForClient] = useState('');
-  const [clients, setClients] = useState<Client[]>([]);
   const [clientSearch, setClientSearch] = useState('');
   const [showAddClient, setShowAddClient] = useState(false);
   const [showAddCustomer, setShowAddCustomer] = useState(false);
@@ -37,61 +36,80 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
   const searchRef = useRef<HTMLInputElement>(null);
   const customerSearchRef = useRef<HTMLInputElement>(null);
 
+  const items = (useQuery(shopApi.listItems, {}) ?? []) as Item[];
+  const customers = (useQuery(shopApi.listCustomers, {}) ?? []) as Customer[];
+  const selectedCustomer = customers.find((customer) => customer.id === selectedCustomerId) ?? null;
+  const clients = (useQuery(
+    shopApi.listClientsByCustomer,
+    selectedCustomer?.isElectrician ? { customerId: selectedCustomer.id } : 'skip',
+  ) ?? []) as Client[];
+  const createCustomer = useMutation(shopApi.createCustomer);
+  const createClient = useMutation(shopApi.createClient);
+  const createInvoice = useMutation(shopApi.createInvoice);
+
   useEffect(() => {
-    setItems(getItems());
-    setCustomers(getCustomers());
     searchRef.current?.focus();
   }, []);
 
-  // Load clients when an electrician customer is selected
   useEffect(() => {
-    if (selectedCustomer?.isElectrician) {
-      setClients(getClientsByCustomer(selectedCustomer.id));
-    } else {
-      setClients([]);
-    }
-    setBuyingForClient('');
-    setClientSearch('');
-  }, [selectedCustomer]);
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.altKey && e.key === 'w') { e.preventDefault(); setMode(m => m === 'Retail' ? 'Wholesale' : 'Retail'); }
-      if (e.key === 'Escape') onBack();
-      if (e.key === 'F5') { e.preventDefault(); handleSave(); }
+    const handler = (event: KeyboardEvent) => {
+      if (event.altKey && event.key === 'w') {
+        event.preventDefault();
+        setMode((currentMode) => currentMode === 'Retail' ? 'Wholesale' : 'Retail');
+      }
+      if (event.key === 'Escape') {
+        onBack();
+      }
+      if (event.key === 'F5') {
+        event.preventDefault();
+        void handleSave();
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [billItems, selectedCustomer, paymentMethod, paidAmount]);
+  });
 
-  const filtered = items.filter(i =>
-    i.name.toLowerCase().includes(search.toLowerCase()) ||
-    i.brand.toLowerCase().includes(search.toLowerCase())
+  useEffect(() => {
+    setBuyingForClient('');
+    setClientSearch('');
+  }, [selectedCustomerId]);
+
+  const filteredItems = items.filter((item) =>
+    item.name.toLowerCase().includes(search.toLowerCase()) ||
+    item.brand.toLowerCase().includes(search.toLowerCase()),
   ).slice(0, 20);
 
-  const filteredCustomers = customers.filter(c =>
-    c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
-    c.phone.includes(customerSearch)
+  const filteredCustomers = customers.filter((customer) =>
+    customer.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+    customer.phone.includes(customerSearch),
   ).slice(0, 10);
 
   const addToBill = (item: Item) => {
-    const existing = billItems.find(b => b.itemId === item.id);
+    const existing = billItems.find((billItem) => billItem.itemId === item.id);
     if (existing) {
-      setBillItems(billItems.map(b => b.itemId === item.id ? { ...b, qty: b.qty + 1 } : b));
+      setBillItems((currentItems) =>
+        currentItems.map((billItem) =>
+          billItem.itemId === item.id ? { ...billItem, qty: billItem.qty + 1 } : billItem,
+        ),
+      );
     } else {
       const price = mode === 'Retail' ? item.retailPrice : item.wholesalePrice;
-      setBillItems([...billItems, {
-        itemId: item.id,
-        name: item.name,
-        qty: 1,
-        price,
-        discount: 0,
-        warrantyExpiry: item.warrantyMonths > 0 ? new Date(Date.now() + item.warrantyMonths * 30 * 86400000).toISOString() : null,
-      }]);
+      setBillItems((currentItems) => [
+        ...currentItems,
+        {
+          itemId: item.id,
+          name: item.name,
+          qty: 1,
+          price,
+          discount: 0,
+          warrantyExpiry: item.warrantyMonths > 0
+            ? new Date(Date.now() + item.warrantyMonths * 30 * 86_400_000).toISOString()
+            : null,
+        },
+      ]);
     }
     setSearch('');
     setIsClickingItem(false);
-    // Keep search focused and dropdown open for continuous adding
     setTimeout(() => {
       searchRef.current?.focus();
       setSearchFocused(true);
@@ -99,133 +117,187 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
   };
 
   const updateQty = (itemId: string, delta: number) => {
-    setBillItems(prev => prev.map(b => b.itemId === itemId ? { ...b, qty: Math.max(1, b.qty + delta) } : b));
+    setBillItems((currentItems) =>
+      currentItems.map((billItem) =>
+        billItem.itemId === itemId ? { ...billItem, qty: Math.max(1, billItem.qty + delta) } : billItem,
+      ),
+    );
   };
 
   const setQty = (itemId: string, qty: number) => {
     const newQty = Math.max(0, qty);
     if (newQty === 0) {
       removeFromBill(itemId);
-    } else {
-      setBillItems(prev => prev.map(b => b.itemId === itemId ? { ...b, qty: newQty } : b));
+      return;
     }
+    setBillItems((currentItems) =>
+      currentItems.map((billItem) => billItem.itemId === itemId ? { ...billItem, qty: newQty } : billItem),
+    );
   };
 
   const removeFromBill = (itemId: string) => {
-    setBillItems(prev => prev.filter(b => b.itemId !== itemId));
+    setBillItems((currentItems) => currentItems.filter((billItem) => billItem.itemId !== itemId));
   };
 
-  const updateDiscount = (itemId: string, disc: number) => {
-    setBillItems(prev => prev.map(b => b.itemId === itemId ? { ...b, discount: disc } : b));
+  const updateDiscount = (itemId: string, discount: number) => {
+    setBillItems((currentItems) =>
+      currentItems.map((billItem) => billItem.itemId === itemId ? { ...billItem, discount } : billItem),
+    );
   };
 
   const updatePrice = (itemId: string, price: number) => {
-    setBillItems(prev => prev.map(b => b.itemId === itemId ? { ...b, price } : b));
+    setBillItems((currentItems) =>
+      currentItems.map((billItem) => billItem.itemId === itemId ? { ...billItem, price } : billItem),
+    );
   };
 
-  const subtotal = billItems.reduce((s, b) => s + (b.price * b.qty), 0);
-  const totalDiscount = billItems.reduce((s, b) => s + (b.price * b.qty * b.discount / 100), 0);
+  const subtotal = billItems.reduce((sum, billItem) => sum + (billItem.price * billItem.qty), 0);
+  const totalDiscount = billItems.reduce((sum, billItem) => sum + (billItem.price * billItem.qty * billItem.discount / 100), 0);
   const total = subtotal - totalDiscount;
   const paid = paidAmount ? parseFloat(paidAmount) : (paymentMethod === 'Credit' ? 0 : total);
   const status = paid >= total ? 'Paid' : paid > 0 ? 'Partial' : 'Unpaid';
 
-  const handleSave = useCallback(() => {
-    if (billItems.length === 0) { toast.error('Add items to bill'); return; }
-    if (mode === 'Wholesale' && !selectedCustomer) { toast.error('Select a customer'); return; }
+  const handleSave = useCallback(async () => {
+    if (billItems.length === 0) {
+      toast.error('Add items to bill');
+      return;
+    }
+    if (mode === 'Wholesale' && !selectedCustomer) {
+      toast.error('Select a customer');
+      return;
+    }
 
-    const inv: Invoice = {
+    const invoicePayload = {
       id: generateId(),
-      invoiceNo: templateType === 'quotation' ? `QUOTATION-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}` : generateInvoiceNo(),
       type: mode,
-      customerId: selectedCustomer?.id || null,
-      customerName: selectedCustomer?.name || null,
+      customerId: selectedCustomer?.id ?? null,
+      customerName: selectedCustomer?.name ?? null,
       items: billItems,
       totalAmount: total,
       paidAmount: templateType === 'quotation' ? 0 : paid,
       paymentMethod: templateType === 'quotation' ? 'Cash' : paymentMethod,
-      status: templateType === 'quotation' ? 'Unpaid' : (status as Invoice['status']),
+      status: templateType === 'quotation' ? 'Unpaid' : status,
       buyingForClient: selectedCustomer?.isElectrician && buyingForClient.trim() ? buyingForClient.trim() : null,
       createdAt: new Date().toISOString(),
+      invoiceNo: '',
     };
 
-    if (templateType === 'bill') {
-      // Only save to database and update stock/credit for actual bills
-      // Update stock
-      billItems.forEach(bi => {
-        const item = items.find(i => i.id === bi.itemId);
-        if (item) {
-          updateItem({ ...item, stock: item.stock - bi.qty, lastSoldAt: new Date().toISOString() });
-        }
-      });
+    const saved = await createInvoice({
+      invoice: invoicePayload,
+      templateType,
+    });
 
-      // Update customer credit
-      if (selectedCustomer && status !== 'Paid') {
-        const unpaid = total - paid;
-        updateCustomer({ ...selectedCustomer, totalCredit: selectedCustomer.totalCredit + unpaid });
-      }
-
-      addInvoice(inv);
-      toast.success(`Invoice ${inv.invoiceNo} saved!`);
-    } else {
-      // For quotations, just show the template without saving
-      toast.success(`Quotation ${inv.invoiceNo} generated!`);
-    }
-
-    // Show template
-    setSavedInvoice(inv);
-
-    // Reset form
+    setSavedInvoice(saved as Invoice);
     setBillItems([]);
-    setSelectedCustomer(null);
+    setSelectedCustomerId(null);
     setPaidAmount('');
     setBuyingForClient('');
     setSearch('');
-    setItems(getItems());
-  }, [billItems, selectedCustomer, mode, total, paid, paymentMethod, status, items, templateType]);
+    toast.success(`${templateType === 'quotation' ? 'Quotation' : 'Invoice'} ${saved.invoiceNo} ${templateType === 'quotation' ? 'generated' : 'saved'}!`);
+  }, [billItems, buyingForClient, createInvoice, mode, paid, paymentMethod, selectedCustomer, status, templateType, total]);
 
-  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && filtered.length > 0) {
-      addToBill(filtered[0]);
+  const handleSearchKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter' && filteredItems.length > 0) {
+      addToBill(filteredItems[0]);
     }
+  };
+
+  const handleAddCustomer = async () => {
+    if (!newCustomerName.trim()) {
+      toast.error('Customer name required');
+      return;
+    }
+    if (!newCustomerPhone.trim()) {
+      toast.error('Phone required');
+      return;
+    }
+
+    const customer: Customer = {
+      id: generateId(),
+      name: newCustomerName.trim(),
+      phone: newCustomerPhone.trim(),
+      isElectrician: newCustomerIsElectrician,
+      creditLimit: parseFloat(newCustomerCreditLimit) || 50000,
+      totalCredit: 0,
+      totalPaid: 0,
+      behaviorScore: 'Good',
+    };
+    await createCustomer({ customer });
+    setSelectedCustomerId(customer.id);
+    setNewCustomerName('');
+    setNewCustomerPhone('');
+    setNewCustomerIsElectrician(false);
+    setNewCustomerCreditLimit('50000');
+    setShowAddCustomer(false);
+    toast.success(`Customer "${customer.name}" added`);
+  };
+
+  const handleAddClient = async () => {
+    if (!selectedCustomer) {
+      return;
+    }
+    if (!newClientName.trim()) {
+      toast.error('Client name required');
+      return;
+    }
+
+    const client: Client = {
+      id: generateId(),
+      customerId: selectedCustomer.id,
+      name: newClientName.trim(),
+      phone: newClientPhone.trim(),
+      address: newClientAddress.trim(),
+      createdAt: new Date().toISOString(),
+    };
+    await createClient({ client });
+    setBuyingForClient(client.name);
+    setNewClientName('');
+    setNewClientPhone('');
+    setNewClientAddress('');
+    setShowAddClient(false);
+    toast.success(`Client "${client.name}" added`);
   };
 
   return (
     <div className="h-screen flex flex-col animate-slide-in">
-      {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card">
         <div className="flex items-center gap-3">
           <button onClick={onBack} className="text-muted-foreground hover:text-foreground text-sm">← Back</button>
           <h1 className="heading text-base">New {templateType === 'bill' ? 'Bill' : 'Quotation'}</h1>
         </div>
         <div className="flex items-center gap-2">
-          {/* Template Type Toggle */}
           <div className="flex bg-muted rounded-md p-0.5">
             <button
               onClick={() => setTemplateType('bill')}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${templateType === 'bill' ? 'bg-white text-gray-900 shadow-sm' : 'text-muted-foreground'}`}
-            >Bill</button>
+            >
+              Bill
+            </button>
             <button
               onClick={() => setTemplateType('quotation')}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${templateType === 'quotation' ? 'bg-white text-gray-900 shadow-sm' : 'text-muted-foreground'}`}
-            >Quotation</button>
+            >
+              Quotation
+            </button>
           </div>
 
-          {/* Mode Toggle */}
           <button
             onClick={() => setMode('Retail')}
             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${mode === 'Retail' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
-          >Retail</button>
+          >
+            Retail
+          </button>
           <button
             onClick={() => { setMode('Wholesale'); setTimeout(() => customerSearchRef.current?.focus(), 100); }}
             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${mode === 'Wholesale' ? 'bg-accent text-accent-foreground' : 'bg-muted text-muted-foreground'}`}
-          >Wholesale <kbd className="hotkey ml-1">Alt+W</kbd></button>
+          >
+            Wholesale <kbd className="hotkey ml-1">Alt+W</kbd>
+          </button>
         </div>
       </div>
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Left: Item Search */}
         <div className="flex-[3] flex flex-col border-r border-border">
-          {/* Wholesale: Customer selector */}
           {mode === 'Wholesale' && (
             <div className="p-3 border-b border-border bg-muted/30">
               {selectedCustomer ? (
@@ -237,11 +309,14 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
                       selectedCustomer.behaviorScore === 'Late' ? 'bg-warning/10 text-warning' :
                       selectedCustomer.behaviorScore === 'Risky' ? 'bg-danger/10 text-danger' :
                       'bg-muted text-muted-foreground'
-                    }`}>{selectedCustomer.behaviorScore}</span>
+                    }`}
+                    >
+                      {selectedCustomer.behaviorScore}
+                    </span>
                   </div>
                   <div className="text-xs text-muted-foreground">
                     Credit: <span className="mono-num font-semibold text-warning">₹{selectedCustomer.totalCredit.toLocaleString('en-IN')}</span>
-                    <button onClick={() => setSelectedCustomer(null)} className="ml-3 text-danger hover:underline">Change</button>
+                    <button onClick={() => setSelectedCustomerId(null)} className="ml-3 text-danger hover:underline">Change</button>
                   </div>
                 </div>
               ) : (
@@ -252,7 +327,7 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
                         <input
                           ref={customerSearchRef}
                           value={customerSearch}
-                          onChange={e => setCustomerSearch(e.target.value)}
+                          onChange={(event) => setCustomerSearch(event.target.value)}
                           placeholder="Search customer by name or phone..."
                           className="flex-1 px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                           autoFocus
@@ -261,11 +336,14 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
                       </div>
                       {filteredCustomers.length > 0 && (
                         <div className="mt-1 card-elevated rounded-lg max-h-40 overflow-y-auto">
-                          {filteredCustomers.map(c => (
-                            <button key={c.id} onClick={() => { setSelectedCustomer(c); setCustomerSearch(''); }}
-                              className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex justify-between">
-                              <span>{c.name} <span className="text-muted-foreground">({c.phone})</span></span>
-                              <span className="mono-num text-xs text-muted-foreground">₹{c.totalCredit.toLocaleString('en-IN')}</span>
+                          {filteredCustomers.map((customer) => (
+                            <button
+                              key={customer.id}
+                              onClick={() => { setSelectedCustomerId(customer.id); setCustomerSearch(''); }}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex justify-between"
+                            >
+                              <span>{customer.name} <span className="text-muted-foreground">({customer.phone})</span></span>
+                              <span className="mono-num text-xs text-muted-foreground">₹{customer.totalCredit.toLocaleString('en-IN')}</span>
                             </button>
                           ))}
                         </div>
@@ -274,39 +352,22 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
                   ) : (
                     <div className="space-y-2 p-3 rounded-lg border border-border bg-muted/30">
                       <div className="text-xs font-semibold text-foreground">Add New Customer</div>
-                      <input value={newCustomerName} onChange={e => setNewCustomerName(e.target.value)} placeholder="Customer name *"
-                        className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" autoFocus />
-                      <input value={newCustomerPhone} onChange={e => setNewCustomerPhone(e.target.value)} placeholder="Phone *"
-                        className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                      <input value={newCustomerName} onChange={(event) => setNewCustomerName(event.target.value)} placeholder="Customer name *" className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" autoFocus />
+                      <input value={newCustomerPhone} onChange={(event) => setNewCustomerPhone(event.target.value)} placeholder="Phone *" className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
                       <div className="flex items-center gap-2">
                         <label className="text-xs text-muted-foreground">Electrician?</label>
-                        <input type="checkbox" checked={newCustomerIsElectrician} onChange={e => setNewCustomerIsElectrician(e.target.checked)}
-                          className="rounded" />
+                        <input type="checkbox" checked={newCustomerIsElectrician} onChange={(event) => setNewCustomerIsElectrician(event.target.checked)} className="rounded" />
                       </div>
-                      <input value={newCustomerCreditLimit} onChange={e => setNewCustomerCreditLimit(e.target.value)} placeholder="Credit limit"
-                        type="number" className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                      <input value={newCustomerCreditLimit} onChange={(event) => setNewCustomerCreditLimit(event.target.value)} placeholder="Credit limit" type="number" className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
                       <div className="flex justify-end gap-2">
                         <button onClick={() => { setNewCustomerName(''); setNewCustomerPhone(''); setNewCustomerIsElectrician(false); setNewCustomerCreditLimit('50000'); setShowAddCustomer(false); }} className="px-3 py-1.5 rounded-md text-xs bg-muted text-muted-foreground">Cancel</button>
-                        <button onClick={() => {
-                          if (!newCustomerName.trim()) { toast.error('Customer name required'); return; }
-                          if (!newCustomerPhone.trim()) { toast.error('Phone required'); return; }
-                          const newCust: Customer = {
-                            id: generateId(), name: newCustomerName.trim(), phone: newCustomerPhone.trim(),
-                            isElectrician: newCustomerIsElectrician, creditLimit: parseFloat(newCustomerCreditLimit) || 50000,
-                            totalCredit: 0, totalPaid: 0, behaviorScore: 'Good',
-                          };
-                          addCustomer(newCust);
-                          setCustomers(prev => [...prev, newCust]);
-                          setSelectedCustomer(newCust);
-                          setNewCustomerName(''); setNewCustomerPhone(''); setNewCustomerIsElectrician(false); setNewCustomerCreditLimit('50000');
-                          setShowAddCustomer(false);
-                          toast.success(`Customer "${newCust.name}" added`);
-                        }} className="px-3 py-1.5 rounded-md text-xs bg-accent text-accent-foreground font-medium">Add Customer</button>
+                        <button onClick={() => void handleAddCustomer()} className="px-3 py-1.5 rounded-md text-xs bg-accent text-accent-foreground font-medium">Add Customer</button>
                       </div>
                     </div>
                   )}
                 </div>
               )}
+
               {selectedCustomer?.isElectrician && (
                 <div className="mt-2">
                   {!showAddClient ? (
@@ -314,7 +375,7 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
                       <div className="flex items-center gap-2">
                         <input
                           value={clientSearch}
-                          onChange={e => { setClientSearch(e.target.value); setBuyingForClient(''); }}
+                          onChange={(event) => { setClientSearch(event.target.value); setBuyingForClient(''); }}
                           placeholder="Search or select client..."
                           className="flex-1 px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                         />
@@ -329,14 +390,17 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
                       )}
                       {!buyingForClient && (
                         <div className="mt-1 card-elevated rounded-lg max-h-32 overflow-y-auto">
-                          {clients.filter(cl => cl.name.toLowerCase().includes(clientSearch.toLowerCase())).map(cl => (
-                            <button key={cl.id} onClick={() => { setBuyingForClient(cl.name); setClientSearch(''); }}
-                              className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex justify-between">
-                              <span>{cl.name}</span>
-                              <span className="text-xs text-muted-foreground">{cl.address}</span>
+                          {clients.filter((client) => client.name.toLowerCase().includes(clientSearch.toLowerCase())).map((client) => (
+                            <button
+                              key={client.id}
+                              onClick={() => { setBuyingForClient(client.name); setClientSearch(''); }}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex justify-between"
+                            >
+                              <span>{client.name}</span>
+                              <span className="text-xs text-muted-foreground">{client.address}</span>
                             </button>
                           ))}
-                          {clients.filter(cl => cl.name.toLowerCase().includes(clientSearch.toLowerCase())).length === 0 && (
+                          {clients.filter((client) => client.name.toLowerCase().includes(clientSearch.toLowerCase())).length === 0 && (
                             <div className="p-2 text-center text-muted-foreground text-xs">No clients found. Click "+ New" to add.</div>
                           )}
                         </div>
@@ -345,28 +409,12 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
                   ) : (
                     <div className="space-y-2 p-3 rounded-lg border border-border bg-muted/30">
                       <div className="text-xs font-semibold text-foreground">Add New Client</div>
-                      <input value={newClientName} onChange={e => setNewClientName(e.target.value)} placeholder="Client name *"
-                        className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" autoFocus />
-                      <input value={newClientPhone} onChange={e => setNewClientPhone(e.target.value)} placeholder="Phone (optional)"
-                        className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
-                      <input value={newClientAddress} onChange={e => setNewClientAddress(e.target.value)} placeholder="Address / Project details"
-                        className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                      <input value={newClientName} onChange={(event) => setNewClientName(event.target.value)} placeholder="Client name *" className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" autoFocus />
+                      <input value={newClientPhone} onChange={(event) => setNewClientPhone(event.target.value)} placeholder="Phone (optional)" className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                      <input value={newClientAddress} onChange={(event) => setNewClientAddress(event.target.value)} placeholder="Address / Project details" className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
                       <div className="flex justify-end gap-2">
                         <button onClick={() => setShowAddClient(false)} className="px-3 py-1.5 rounded-md text-xs bg-muted text-muted-foreground">Cancel</button>
-                        <button onClick={() => {
-                          if (!newClientName.trim()) { toast.error('Client name required'); return; }
-                          const newCl: Client = {
-                            id: generateId(), customerId: selectedCustomer.id,
-                            name: newClientName.trim(), phone: newClientPhone.trim(),
-                            address: newClientAddress.trim(), createdAt: new Date().toISOString(),
-                          };
-                          addClient(newCl);
-                          setClients(prev => [...prev, newCl]);
-                          setBuyingForClient(newCl.name);
-                          setNewClientName(''); setNewClientPhone(''); setNewClientAddress('');
-                          setShowAddClient(false);
-                          toast.success(`Client "${newCl.name}" added`);
-                        }} className="px-3 py-1.5 rounded-md text-xs bg-accent text-accent-foreground font-medium">Add Client</button>
+                        <button onClick={() => void handleAddClient()} className="px-3 py-1.5 rounded-md text-xs bg-accent text-accent-foreground font-medium">Add Client</button>
                       </div>
                     </div>
                   )}
@@ -376,15 +424,13 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
             </div>
           )}
 
-          {/* Search bar */}
           <div className="p-3 border-b border-border">
             <input
               ref={searchRef}
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={(event) => setSearch(event.target.value)}
               onFocus={() => setSearchFocused(true)}
               onBlur={() => {
-                // Don't close dropdown immediately if clicking on an item
                 if (!isClickingItem) {
                   setTimeout(() => setSearchFocused(false), 200);
                 }
@@ -396,10 +442,9 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
             />
           </div>
 
-          {/* Item list */}
           <div className="flex-1 overflow-y-auto">
             {searchFocused || search ? (
-              (search ? filtered : items.slice(0, 30)).map(item => (
+              (search ? filteredItems : items.slice(0, 30)).map((item) => (
                 <button
                   key={item.id}
                   onMouseDown={() => setIsClickingItem(true)}
@@ -426,7 +471,6 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
           </div>
         </div>
 
-        {/* Right: Bill Summary */}
         <div className="flex-[2] flex flex-col bg-card">
           <div className="p-3 border-b border-border">
             <h2 className="heading text-sm">Bill Summary</h2>
@@ -437,48 +481,37 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
               <div className="p-8 text-center text-muted-foreground text-sm">Add items to start billing</div>
             ) : (
               <div className="divide-y divide-border">
-                {billItems.map(bi => (
-                  <div key={bi.itemId} className="px-3 py-2.5 text-sm">
+                {billItems.map((billItem) => (
+                  <div key={billItem.itemId} className="px-3 py-2.5 text-sm">
                     <div className="flex items-center justify-between">
-                      <span className="font-medium truncate flex-1">{bi.name}</span>
-                      <button onClick={() => removeFromBill(bi.itemId)} className="text-danger text-xs ml-2 hover:underline">×</button>
+                      <span className="font-medium truncate flex-1">{billItem.name}</span>
+                      <button onClick={() => removeFromBill(billItem.itemId)} className="text-danger text-xs ml-2 hover:underline">×</button>
                     </div>
                     <div className="flex items-center gap-2 mt-1.5">
-                      <button onClick={() => updateQty(bi.itemId, -1)} className="w-6 h-6 rounded bg-muted text-foreground text-xs flex items-center justify-center hover:bg-secondary">−</button>
+                      <button onClick={() => updateQty(billItem.itemId, -1)} className="w-6 h-6 rounded bg-muted text-foreground text-xs flex items-center justify-center hover:bg-secondary">−</button>
                       <input
                         type="number"
-                        value={bi.qty}
-                        onChange={e => setQty(bi.itemId, parseInt(e.target.value) || 0)}
+                        value={billItem.qty}
+                        onChange={(event) => setQty(billItem.itemId, parseInt(event.target.value, 10) || 0)}
                         className="mono-num text-xs w-12 px-1 py-1 text-center rounded bg-muted border border-input focus:outline-none focus:ring-1 focus:ring-accent"
                         min="0"
                       />
-                      <button onClick={() => updateQty(bi.itemId, 1)} className="w-6 h-6 rounded bg-muted text-foreground text-xs flex items-center justify-center hover:bg-secondary">+</button>
+                      <button onClick={() => updateQty(billItem.itemId, 1)} className="w-6 h-6 rounded bg-muted text-foreground text-xs flex items-center justify-center hover:bg-secondary">+</button>
                       <span className="text-muted-foreground text-xs mx-1">×</span>
                       {mode === 'Wholesale' ? (
-                        <input
-                          type="number"
-                          value={bi.price}
-                          onChange={e => updatePrice(bi.itemId, parseFloat(e.target.value) || 0)}
-                          className="mono-num w-20 px-2 py-1 text-xs rounded bg-muted border border-input"
-                        />
+                        <input type="number" value={billItem.price} onChange={(event) => updatePrice(billItem.itemId, parseFloat(event.target.value) || 0)} className="mono-num w-20 px-2 py-1 text-xs rounded bg-muted border border-input" />
                       ) : (
-                        <span className="mono-num text-xs">₹{bi.price.toLocaleString('en-IN')}</span>
+                        <span className="mono-num text-xs">₹{billItem.price.toLocaleString('en-IN')}</span>
                       )}
                       {mode === 'Wholesale' && (
                         <>
                           <span className="text-muted-foreground text-xs">-</span>
-                          <input
-                            type="number"
-                            value={bi.discount}
-                            onChange={e => updateDiscount(bi.itemId, parseFloat(e.target.value) || 0)}
-                            className="mono-num w-12 px-2 py-1 text-xs rounded bg-muted border border-input"
-                            placeholder="%"
-                          />
+                          <input type="number" value={billItem.discount} onChange={(event) => updateDiscount(billItem.itemId, parseFloat(event.target.value) || 0)} className="mono-num w-12 px-2 py-1 text-xs rounded bg-muted border border-input" placeholder="%" />
                           <span className="text-muted-foreground text-xs">%</span>
                         </>
                       )}
                       <span className="mono-num font-semibold text-xs ml-auto">
-                        ₹{(bi.price * bi.qty * (1 - bi.discount / 100)).toLocaleString('en-IN')}
+                        ₹{(billItem.price * billItem.qty * (1 - billItem.discount / 100)).toLocaleString('en-IN')}
                       </span>
                     </div>
                   </div>
@@ -487,7 +520,6 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
             )}
           </div>
 
-          {/* Totals & Payment */}
           <div className="border-t border-border p-3 space-y-3">
             {totalDiscount > 0 && (
               <div className="flex justify-between text-xs text-muted-foreground">
@@ -506,14 +538,15 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
               <span className="mono-num">₹{total.toLocaleString('en-IN')}</span>
             </div>
 
-            {/* Payment method */}
             <div className="flex gap-1.5">
-              {(['Cash', 'UPI', 'Mixed', ...(mode === 'Wholesale' ? ['Credit'] : [])] as PaymentMethod[]).map(m => (
+              {(['Cash', 'UPI', 'Mixed', ...(mode === 'Wholesale' ? ['Credit'] : [])] as PaymentMethod[]).map((methodOption) => (
                 <button
-                  key={m}
-                  onClick={() => setPaymentMethod(m)}
-                  className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors ${paymentMethod === m ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-secondary'}`}
-                >{m}</button>
+                  key={methodOption}
+                  onClick={() => setPaymentMethod(methodOption)}
+                  className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors ${paymentMethod === methodOption ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-secondary'}`}
+                >
+                  {methodOption}
+                </button>
               ))}
             </div>
 
@@ -521,14 +554,14 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
               <input
                 type="number"
                 value={paidAmount}
-                onChange={e => setPaidAmount(e.target.value)}
+                onChange={(event) => setPaidAmount(event.target.value)}
                 placeholder="Paid amount..."
                 className="w-full px-3 py-2 rounded-lg border border-input text-sm mono-num focus:outline-none focus:ring-2 focus:ring-accent"
               />
             )}
 
             <button
-              onClick={handleSave}
+              onClick={() => void handleSave()}
               className="w-full py-3 rounded-lg bg-accent text-accent-foreground font-semibold text-sm hover:opacity-90 transition-opacity"
             >
               Save & Print {templateType === 'quotation' ? 'Quotation' : 'Bill'} <kbd className="hotkey ml-2 bg-accent-foreground/20 border-accent-foreground/30 text-accent-foreground/80">F5</kbd>
@@ -537,13 +570,8 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
         </div>
       </div>
 
-      {/* Bill Template Modal */}
       {savedInvoice && (
-        <BillTemplate
-          invoice={savedInvoice}
-          onClose={() => setSavedInvoice(null)}
-          type={templateType}
-        />
+        <BillTemplate invoice={savedInvoice} onClose={() => setSavedInvoice(null)} type={templateType} />
       )}
     </div>
   );

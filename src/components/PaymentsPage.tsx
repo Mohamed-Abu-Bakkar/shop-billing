@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { Customer, Payment } from '@/types';
-import { getCustomers, getPayments, addPayment, updateCustomer, generateId } from '@/lib/store';
+import { generateId } from '@/lib/shop';
+import { shopApi } from '@/lib/convex';
 import { toast } from 'sonner';
 
 interface PaymentsPageProps {
@@ -8,43 +10,32 @@ interface PaymentsPageProps {
 }
 
 export default function PaymentsPage({ onBack }: PaymentsPageProps) {
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [payments, setPayments] = useState<Payment[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState('');
-
-  const reload = () => {
-    setCustomers(getCustomers());
-    setPayments(getPayments());
-  };
-  useEffect(reload, []);
+  const customers = (useQuery(shopApi.listCustomers, {}) ?? []) as Customer[];
+  const payments = (useQuery(shopApi.listPayments, {}) ?? []) as Payment[];
+  const applyCustomerPayment = useMutation(shopApi.applyCustomerPayment);
 
   const filtered = payments.filter(p =>
     p.customerName.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handlePayment = (custId: string, amount: number, method: 'Cash' | 'UPI' | 'Mixed', date: string) => {
+  const handlePayment = async (custId: string, amount: number, method: 'Cash' | 'UPI' | 'Mixed', date: string) => {
     const cust = customers.find(c => c.id === custId);
     if (!cust) return;
-
-    addPayment({
-      id: generateId(),
-      customerId: custId,
-      customerName: cust.name,
-      amount,
-      method,
+    await applyCustomerPayment({
       invoiceId: null,
-      createdAt: new Date(date).toISOString(),
+      payment: {
+        id: generateId(),
+        customerId: custId,
+        customerName: cust.name,
+        amount,
+        method,
+        invoiceId: null,
+        createdAt: new Date(date).toISOString(),
+      },
     });
-
-    updateCustomer({
-      ...cust,
-      totalCredit: Math.max(0, cust.totalCredit - amount),
-      totalPaid: cust.totalPaid + amount,
-    });
-
     toast.success(`₹${amount.toLocaleString('en-IN')} received from ${cust.name}`);
-    reload();
     setShowForm(false);
   };
 

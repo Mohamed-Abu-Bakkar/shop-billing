@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
-import { getInvoices, getItems, getCustomers } from '@/lib/store';
+import { useState } from 'react';
+import { useQuery } from 'convex/react';
 import { Invoice, Item } from '@/types';
+import { shopApi } from '@/lib/convex';
 import BillTemplate from './BillTemplate';
 
 interface ReportsPageProps {
@@ -8,15 +9,10 @@ interface ReportsPageProps {
 }
 
 export default function ReportsPage({ onBack }: ReportsPageProps) {
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [items, setItems] = useState<Item[]>([]);
   const [tab, setTab] = useState<'daily' | 'credit' | 'profit' | 'fast' | 'dead' | 'invoices'>('daily');
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
-
-  useEffect(() => {
-    setInvoices(getInvoices());
-    setItems(getItems());
-  }, []);
+  const invoices = (useQuery(shopApi.listInvoices, {}) ?? []) as Invoice[];
+  const items = (useQuery(shopApi.listItems, {}) ?? []) as Item[];
 
   const today = new Date().toDateString();
   const todayInv = invoices.filter(i => new Date(i.createdAt).toDateString() === today);
