@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { Client, Customer, Invoice, InvoiceItem, Item, PaymentMethod } from '@/types';
-import { generateId } from '@/lib/shop';
+import { generateId } from '@/lib/id';
 import { shopApi } from '@/lib/convex';
 import { toast } from 'sonner';
 import BillTemplate from './BillTemplate';

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { BehaviorScore, Client, Customer, Invoice } from '@/types';
-import { generateId } from '@/lib/shop';
+import { generateId } from '@/lib/id';
 import { shopApi } from '@/lib/convex';
 import { toast } from 'sonner';
 
