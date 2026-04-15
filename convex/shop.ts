@@ -50,6 +50,7 @@ const clientValidator = v.object({
 
 const invoiceValidator = v.object({
   id: v.string(),
+  invoiceNo: v.string(),
   type: v.string(),
   customerId: v.union(v.string(), v.null()),
   customerName: v.union(v.string(), v.null()),

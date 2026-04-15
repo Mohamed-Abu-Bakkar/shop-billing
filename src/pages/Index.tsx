@@ -14,6 +14,7 @@ const Index = () => {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'n' && !e.ctrlKey && !e.altKey && !e.metaKey && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+        e.preventDefault();
         setPage('billing');
       }
     };
