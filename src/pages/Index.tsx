@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from 'convex/react';
+import { shopApi } from '@/lib/convex';
 import Dashboard from '@/components/Dashboard';
 import BillingScreen from '@/components/BillingScreen';
 import InventoryPage from '@/components/InventoryPage';
@@ -10,6 +12,16 @@ type Page = 'dashboard' | 'billing' | 'inventory' | 'customers' | 'reports' | 'p
 
 const Index = () => {
   const [page, setPage] = useState<Page>('dashboard');
+
+  // Fetch all data once to avoid refetching on navigation
+  const invoices = useQuery(shopApi.listInvoices, {});
+  const customers = useQuery(shopApi.listCustomers, {});
+  const items = useQuery(shopApi.listItems, {});
+  const payments = useQuery(shopApi.listPayments, {});
+  const clients = customers?.flatMap(c => useQuery(shopApi.listClientsByCustomer, { customerId: c.id }) ?? []) ?? [];
+
+  const customerCount = customers?.length ?? 0;
+  const itemCount = items?.length ?? 0;
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -24,11 +36,13 @@ const Index = () => {
 
   const goHome = () => setPage('dashboard');
 
-  if (page === 'billing') return <BillingScreen onBack={goHome} />;
-  if (page === 'inventory') return <InventoryPage onBack={goHome} />;
-  if (page === 'customers') return <CustomersPage onBack={goHome} />;
-  if (page === 'reports') return <ReportsPage onBack={goHome} />;
-  if (page === 'payments') return <PaymentsPage onBack={goHome} />;
+  const commonProps = { invoices, customers, items, payments };
+
+  if (page === 'billing') return <BillingScreen {...commonProps} onBack={goHome} />;
+  if (page === 'inventory') return <InventoryPage {...commonProps} onBack={goHome} />;
+  if (page === 'customers') return <CustomersPage {...commonProps} onBack={goHome} />;
+  if (page === 'reports') return <ReportsPage {...commonProps} onBack={goHome} />;
+  if (page === 'payments') return <PaymentsPage {...commonProps} onBack={goHome} />;
 
   return (
     <div className="min-h-screen bg-background">
@@ -36,7 +50,7 @@ const Index = () => {
         <h1 className="heading text-lg tracking-tight">Sri Mahalingam Electricals</h1>
         <span className="text-xs text-muted-foreground">Electrical & Hardware Store</span>
       </header>
-      <Dashboard onNavigate={(p) => setPage(p as Page)} />
+      <Dashboard invoices={invoices} customerCount={customerCount} itemCount={itemCount} onNavigate={(p) => setPage(p as Page)} />
     </div>
   );
 };

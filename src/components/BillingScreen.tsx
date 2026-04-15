@@ -8,9 +8,13 @@ import BillTemplate from './BillTemplate';
 
 interface BillingScreenProps {
   onBack: () => void;
+  items?: Item[];
+  customers?: Customer[];
+  invoices?: Invoice[];
+  payments?: any[];
 }
 
-export default function BillingScreen({ onBack }: BillingScreenProps) {
+export default function BillingScreen({ onBack, items = [], customers = [], invoices = [], payments = [] }: BillingScreenProps) {
   const [mode, setMode] = useState<'Retail' | 'Wholesale'>('Retail');
   const [templateType, setTemplateType] = useState<'bill' | 'quotation'>('bill');
   const [search, setSearch] = useState('');
@@ -36,8 +40,7 @@ export default function BillingScreen({ onBack }: BillingScreenProps) {
   const searchRef = useRef<HTMLInputElement>(null);
   const customerSearchRef = useRef<HTMLInputElement>(null);
 
-  const items = (useQuery(shopApi.listItems, {}) ?? []) as Item[];
-  const customers = (useQuery(shopApi.listCustomers, {}) ?? []) as Customer[];
+
   const selectedCustomer = customers.find((customer) => customer.id === selectedCustomerId) ?? null;
   const clients = (useQuery(
     shopApi.listClientsByCustomer,

@@ -1,15 +1,13 @@
-import { useQuery } from 'convex/react';
 import { Invoice } from '@/types';
-import { shopApi } from '@/lib/convex';
 
 interface DashboardProps {
+  invoices?: Invoice[];
+  customerCount: number;
+  itemCount: number;
   onNavigate: (page: string) => void;
 }
 
-export default function Dashboard({ onNavigate }: DashboardProps) {
-  const invoices = (useQuery(shopApi.listInvoices, {}) ?? []) as Invoice[];
-  const customerCount = ((useQuery(shopApi.listCustomers, {}) ?? []) as unknown[]).length;
-  const itemCount = ((useQuery(shopApi.listItems, {}) ?? []) as unknown[]).length;
+export default function Dashboard({ invoices = [], customerCount, itemCount, onNavigate }: DashboardProps) {
 
   const today = new Date().toDateString();
   const todayInvoices = invoices.filter(i => new Date(i.createdAt).toDateString() === today);
