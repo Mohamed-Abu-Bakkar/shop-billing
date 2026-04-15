@@ -18,7 +18,6 @@ const Index = () => {
   const customers = useQuery(shopApi.listCustomers, {});
   const items = useQuery(shopApi.listItems, {});
   const payments = useQuery(shopApi.listPayments, {});
-  const clients = customers?.flatMap(c => useQuery(shopApi.listClientsByCustomer, { customerId: c.id }) ?? []) ?? [];
 
   const customerCount = customers?.length ?? 0;
   const itemCount = items?.length ?? 0;
