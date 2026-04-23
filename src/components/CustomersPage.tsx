@@ -28,11 +28,12 @@ export default function CustomersPage({ onBack }: CustomersPageProps) {
   const unpaidInvoices = customerInvoices.filter((invoice) => invoice.status !== 'Paid');
 
   const handleSave = async (customer: Customer) => {
+    const { _creationTime, _id, ...customerData } = customer;
     if (editCust) {
-      await saveCustomer({ customer });
+      await saveCustomer({ customer: customerData });
       toast.success('Customer updated');
     } else {
-      await createCustomer({ customer });
+      await createCustomer({ customer: customerData });
       toast.success('Customer added');
     }
     setShowForm(false);
