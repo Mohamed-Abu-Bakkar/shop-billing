@@ -33,11 +33,12 @@ export default function InventoryPage({ onBack }: InventoryPageProps) {
   });
 
   const handleSave = async (item: Item) => {
+    const { _creationTime, _id, ...itemData } = item;
     if (editItem) {
-      await saveItem({ item });
+      await saveItem({ item: itemData });
       toast.success('Item updated');
     } else {
-      await createItem({ item });
+      await createItem({ item: itemData });
       toast.success('Item added');
     }
     setShowForm(false);
