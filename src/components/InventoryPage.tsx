@@ -4,6 +4,7 @@ import { Item, Category, Unit } from '@/types';
 import { generateId } from '@/lib/id';
 import { shopApi } from '@/lib/convex';
 import { toast } from 'sonner';
+import { Pencil, Trash2 } from 'lucide-react';
 
 interface InventoryPageProps {
   onBack: () => void;
@@ -96,7 +97,7 @@ export default function InventoryPage({ onBack }: InventoryPageProps) {
           </thead>
           <tbody className="divide-y divide-border">
             {filtered.map(item => (
-              <tr key={item.id} className={`hover:bg-muted/30 transition-colors ${item.stock <= item.minStock ? 'border-l-4 border-l-warning' : ''}`}>
+              <tr key={item.id} className={`hover:bg-muted/30 transition-colors cursor-pointer ${item.stock <= item.minStock ? 'border-l-4 border-l-warning' : ''}`} onClick={() => { setEditItem(item); setShowForm(true); }}>
                 <td className="px-4 py-2.5 font-medium">{item.name}</td>
                 <td className="px-4 py-2.5 text-muted-foreground">{item.brand}</td>
                 <td className="px-4 py-2.5"><span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{item.category}</span></td>
@@ -104,9 +105,13 @@ export default function InventoryPage({ onBack }: InventoryPageProps) {
                 <td className="px-4 py-2.5 text-right mono-num">₹{item.purchasePrice}</td>
                 <td className="px-4 py-2.5 text-right mono-num">₹{item.retailPrice}</td>
                 <td className="px-4 py-2.5 text-right mono-num">₹{item.wholesalePrice}</td>
-                <td className="px-4 py-2.5 text-right">
-                  <button onClick={() => { setEditItem(item); setShowForm(true); }} className="text-accent text-xs hover:underline mr-2">Edit</button>
-                  <button onClick={() => handleDelete(item.id)} className="text-danger text-xs hover:underline">Del</button>
+                <td className="px-4 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
+                  <button onClick={() => { setEditItem(item); setShowForm(true); }} className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-accent/10 text-accent mr-1">
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => handleDelete(item.id)} className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-danger/10 text-danger">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </td>
               </tr>
             ))}

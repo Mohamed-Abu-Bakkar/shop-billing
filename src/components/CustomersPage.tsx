@@ -236,31 +236,53 @@ function TransactionHistory({ invoices }: { invoices: Invoice[] }) {
 function ClientManager({ customerId }: { customerId: string }) {
   const clients = (useQuery(shopApi.listClientsByCustomer, { customerId }) ?? []) as Client[];
   const createClient = useMutation(shopApi.createClient);
+  const updateClient = useMutation(shopApi.updateClient);
   const removeClient = useMutation(shopApi.deleteClient);
   const [showAdd, setShowAdd] = useState(false);
+  const [editClient, setEditClient] = useState<Client | null>(null);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
 
-  const handleAdd = async () => {
-    if (!name.trim()) {
-      toast.error('Client name required');
-      return;
-    }
-    const client: Client = {
-      id: generateId(),
-      customerId,
-      name: name.trim(),
-      phone: phone.trim(),
-      address: address.trim(),
-      createdAt: new Date().toISOString(),
-    };
-    await createClient({ client });
-    toast.success(`Client "${name}" added`);
+  const resetForm = () => {
     setName('');
     setPhone('');
     setAddress('');
     setShowAdd(false);
+    setEditClient(null);
+  };
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      toast.error('Client name required');
+      return;
+    }
+    if (editClient) {
+      await updateClient({
+        client: { ...editClient, name: name.trim(), phone: phone.trim(), address: address.trim() },
+      });
+      toast.success(`Client "${name}" updated`);
+    } else {
+      const client: Client = {
+        id: generateId(),
+        customerId,
+        name: name.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
+        createdAt: new Date().toISOString(),
+      };
+      await createClient({ client });
+      toast.success(`Client "${name}" added`);
+    }
+    resetForm();
+  };
+
+  const handleEdit = (client: Client) => {
+    setName(client.name);
+    setPhone(client.phone || '');
+    setAddress(client.address || '');
+    setEditClient(client);
+    setShowAdd(true);
   };
 
   const handleDelete = async (id: string, clientName: string) => {
@@ -299,8 +321,10 @@ function ClientManager({ customerId }: { customerId: string }) {
             className="w-full px-3 py-2 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
           />
           <div className="flex justify-end gap-2">
-            <button onClick={() => setShowAdd(false)} className="px-3 py-1.5 rounded-md text-xs bg-muted text-muted-foreground">Cancel</button>
-            <button onClick={handleAdd} className="px-3 py-1.5 rounded-md text-xs bg-accent text-accent-foreground font-medium">Add</button>
+            <button onClick={resetForm} className="px-3 py-1.5 rounded-md text-xs bg-muted text-muted-foreground">Cancel</button>
+            <button onClick={handleSave} className="px-3 py-1.5 rounded-md text-xs bg-accent text-accent-foreground font-medium">
+              {editClient ? 'Update' : 'Add'}
+            </button>
           </div>
         </div>
       )}
@@ -316,7 +340,14 @@ function ClientManager({ customerId }: { customerId: string }) {
                 {client.phone && <span className="text-muted-foreground text-xs ml-2">{client.phone}</span>}
                 {client.address && <span className="text-muted-foreground text-xs ml-2">· {client.address}</span>}
               </div>
-              <button onClick={() => void handleDelete(client.id, client.name)} className="text-danger text-xs hover:underline">Remove</button>
+              <div className="flex items-center gap-1">
+                <button onClick={() => handleEdit(client)} className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-accent/10 text-accent">
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button onClick={() => handleDelete(client.id, client.name)} className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-danger/10 text-danger">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           ))}
         </div>

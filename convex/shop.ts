@@ -253,6 +253,18 @@ export const createClient = mutation({
   },
 });
 
+export const updateClient = mutation({
+  args: { client: clientValidator },
+  handler: async (ctx, { client }) => {
+    const existing = await getClientById(ctx, client.id);
+    if (!existing) {
+      throw new Error("Client not found");
+    }
+    await ctx.db.patch(existing._id, client);
+    return client;
+  },
+});
+
 export const deleteClient = mutation({
   args: { id: v.string() },
   handler: async (ctx, { id }) => {
