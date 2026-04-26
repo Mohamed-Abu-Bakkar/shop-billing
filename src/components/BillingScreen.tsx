@@ -129,10 +129,6 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
 
   const setQty = (itemId: string, qty: number) => {
     const newQty = Math.max(0, qty);
-    if (newQty === 0) {
-      removeFromBill(itemId);
-      return;
-    }
     setBillItems((currentItems) =>
       currentItems.map((billItem) => billItem.itemId === itemId ? { ...billItem, qty: newQty } : billItem),
     );
