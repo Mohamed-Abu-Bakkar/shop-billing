@@ -4,6 +4,7 @@ import { BehaviorScore, Client, Customer, Invoice } from '@/types';
 import { generateId } from '@/lib/id';
 import { shopApi } from '@/lib/convex';
 import { toast } from 'sonner';
+import { Pencil, Trash2, Eye } from 'lucide-react';
 
 interface CustomersPageProps {
   onBack: () => void;
@@ -14,6 +15,7 @@ export default function CustomersPage({ onBack }: CustomersPageProps) {
   const invoices = (useQuery(shopApi.listInvoices, {}) ?? []) as Invoice[];
   const createCustomer = useMutation(shopApi.createCustomer);
   const saveCustomer = useMutation(shopApi.updateCustomer);
+  const deleteCustomer = useMutation(shopApi.deleteCustomer);
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editCust, setEditCust] = useState<Customer | null>(null);
@@ -39,6 +41,11 @@ export default function CustomersPage({ onBack }: CustomersPageProps) {
     setShowForm(false);
     setEditCust(null);
     setSelectedCustomerId(customer.id);
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    await deleteCustomer({ id });
+    toast.success(`Customer "${name}" deleted`);
   };
 
   return (
@@ -117,41 +124,60 @@ export default function CustomersPage({ onBack }: CustomersPageProps) {
               className="w-full px-3 py-2 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
-          <div className="flex-1 overflow-y-auto divide-y divide-border">
-            {filtered.map((customer) => (
-              <button
-                key={customer.id}
-                onClick={() => setSelectedCustomerId(customer.id)}
-                className="w-full text-left px-4 py-3 hover:bg-muted/30 transition-colors flex items-center justify-between text-sm"
-              >
-                <div className="flex items-center gap-3">
-                  <div>
-                    <span className="font-medium">{customer.name}</span>
-                    <span className="text-muted-foreground text-xs ml-2">{customer.phone}</span>
-                    {customer.isElectrician && (
-                      <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-accent/10 text-accent">Electrician</span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                    customer.behaviorScore === 'Good' ? 'bg-success/10 text-success' :
-                    customer.behaviorScore === 'Late' ? 'bg-warning/10 text-warning' :
-                    customer.behaviorScore === 'Risky' ? 'bg-danger/10 text-danger' : 'bg-muted text-muted-foreground'
-                  }`}
+          <div className="flex-1 overflow-y-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 sticky top-0">
+                <tr className="text-left text-xs text-muted-foreground uppercase tracking-wider">
+                  <th className="px-4 py-2">Customer</th>
+                  <th className="px-4 py-2">Phone</th>
+                  <th className="px-4 py-2">Type</th>
+                  <th className="px-4 py-2 text-right">Credit</th>
+                  <th className="px-4 py-2 text-center">Behavior</th>
+                  <th className="px-4 py-2"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filtered.map((customer) => (
+                  <tr
+                    key={customer.id}
+                    onClick={() => setSelectedCustomerId(customer.id)}
+                    className="hover:bg-muted/30 transition-colors cursor-pointer"
                   >
-                    {customer.behaviorScore}
-                  </span>
-                  <span className="mono-num font-semibold text-warning">₹{customer.totalCredit.toLocaleString('en-IN')}</span>
-                  <button
-                    onClick={(event) => { event.stopPropagation(); setEditCust(customer); setShowForm(true); }}
-                    className="text-accent text-xs hover:underline"
-                  >
-                    Edit
-                  </button>
-                </div>
-              </button>
-            ))}
+                    <td className="px-4 py-2.5 font-medium">{customer.name}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground">{customer.phone}</td>
+                    <td className="px-4 py-2.5">
+                      {customer.isElectrician && (
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-accent/10 text-accent">Electrician</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5 text-right mono-num text-warning">₹{customer.totalCredit.toLocaleString('en-IN')}</td>
+                    <td className="px-4 py-2.5 text-center">
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                        customer.behaviorScore === 'Good' ? 'bg-success/10 text-success' :
+                        customer.behaviorScore === 'Late' ? 'bg-warning/10 text-warning' :
+                        customer.behaviorScore === 'Risky' ? 'bg-danger/10 text-danger' : 'bg-muted text-muted-foreground'
+                      }`}>
+                        {customer.behaviorScore}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5 text-right">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setEditCust(customer); setShowForm(true); }}
+                        className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-accent/10 text-accent mr-1"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(customer.id, customer.name); }}
+                        className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-danger/10 text-danger"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
             {filtered.length === 0 && <div className="p-8 text-center text-muted-foreground text-sm">No customers found</div>}
           </div>
         </>
