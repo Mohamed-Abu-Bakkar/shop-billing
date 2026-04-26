@@ -19,7 +19,7 @@ export default defineConfig({
       manifest: {
         name: 'Sri Mahalingam Electricals - Billing App',
         short_name: 'Sri Mahalingam Electricals',
-        description: 'Electrical & Hardware Store Billing Application',
+        description: 'Electrical & Plumbing Store Billing Application',
         theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',

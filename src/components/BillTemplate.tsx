@@ -42,7 +42,7 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
               {type === 'bill' && (
                 <div>
                   <h1 className="text-3xl font-bold text-primary mb-2">Sri Mahalingam Electricals</h1>
-                  <p className="text-lg text-gray-600 mb-1">Electrical & Hardware Store</p>
+                  <p className="text-lg text-gray-600 mb-1">Electrical & Plumbing Store</p>
                   <p className="text-sm text-gray-500">GSTIN: 33ADWPJ5940P1ZR</p>
                   <p className="text-sm text-gray-500">Phone: 99421 94751</p>
                   <p className="text-sm text-gray-500">Email: jaimaha772@gmail.com</p>

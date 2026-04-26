@@ -47,7 +47,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card px-4 py-3 flex items-center justify-between">
         <h1 className="heading text-lg tracking-tight">Sri Mahalingam Electricals</h1>
-        <span className="text-xs text-muted-foreground">Electrical & Hardware Store</span>
+        <span className="text-xs text-muted-foreground">Electrical & Plumbing Store</span>
       </header>
       <Dashboard invoices={invoices} customerCount={customerCount} itemCount={itemCount} onNavigate={(p) => setPage(p as Page)} />
     </div>
