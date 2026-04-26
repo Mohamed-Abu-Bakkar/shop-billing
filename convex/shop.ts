@@ -209,6 +209,18 @@ export const updateCustomer = mutation({
   },
 });
 
+export const deleteCustomer = mutation({
+  args: { id: v.string() },
+  handler: async (ctx, { id }) => {
+    const existing = await getCustomerById(ctx, id);
+    if (!existing) {
+      return { deleted: false };
+    }
+    await ctx.db.delete(existing._id);
+    return { deleted: true };
+  },
+});
+
 export const listInvoices = query({
   args: {},
   handler: async (ctx) => {

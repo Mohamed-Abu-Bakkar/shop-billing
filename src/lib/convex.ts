@@ -14,6 +14,7 @@ type ShopApi = {
   listCustomers: FunctionReference<"query", "public", EmptyArgs, Customer[]>;
   createCustomer: FunctionReference<"mutation", "public", { customer: Customer }, Customer>;
   updateCustomer: FunctionReference<"mutation", "public", { customer: Customer }, Customer>;
+  deleteCustomer: FunctionReference<"mutation", "public", { id: string }, { deleted: boolean }>;
   listInvoices: FunctionReference<"query", "public", EmptyArgs, Invoice[]>;
   listPayments: FunctionReference<"query", "public", EmptyArgs, Payment[]>;
   listClientsByCustomer: FunctionReference<"query", "public", { customerId: string }, Client[]>;
@@ -43,6 +44,7 @@ export const shopApi: ShopApi = {
   listCustomers: makeFunctionReference("shop:listCustomers"),
   createCustomer: makeFunctionReference("shop:createCustomer"),
   updateCustomer: makeFunctionReference("shop:updateCustomer"),
+  deleteCustomer: makeFunctionReference("shop:deleteCustomer"),
   listInvoices: makeFunctionReference("shop:listInvoices"),
   listPayments: makeFunctionReference("shop:listPayments"),
   listClientsByCustomer: makeFunctionReference("shop:listClientsByCustomer"),
