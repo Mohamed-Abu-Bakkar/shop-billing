@@ -269,7 +269,7 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
             >
               Print Bill
             </button>
-            <button
+            {/* <button
               onClick={() => {
                 const printWindow = window.open('', '_blank');
                 if (printWindow) {
@@ -308,7 +308,7 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
               className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
             >
               Print to PDF
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
