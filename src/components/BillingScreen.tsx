@@ -134,6 +134,13 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
     );
   };
 
+  const handleQtyBlur = (itemId: string) => {
+    const billItem = billItems.find((b) => b.itemId === itemId);
+    if (billItem && billItem.qty === 0) {
+      removeFromBill(itemId);
+    }
+  };
+
   const removeFromBill = (itemId: string) => {
     setBillItems((currentItems) => currentItems.filter((billItem) => billItem.itemId !== itemId));
   };
@@ -492,6 +499,7 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
                         type="number"
                         value={billItem.qty}
                         onChange={(event) => setQty(billItem.itemId, parseInt(event.target.value, 10) || 0)}
+                        onBlur={() => handleQtyBlur(billItem.itemId)}
                         className="mono-num text-xs w-12 px-1 py-1 text-center rounded bg-muted border border-input focus:outline-none focus:ring-1 focus:ring-accent"
                         min="0"
                       />
