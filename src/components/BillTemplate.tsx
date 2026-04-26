@@ -28,16 +28,86 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
   };
 
   const handlePrint = () => {
-    window.print();
+    const printContent = document.getElementById('bill-template');
+    if (!printContent) return;
+    
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${invoice.invoiceNo}</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: Arial, sans-serif; 
+              font-size: 11px; 
+              line-height: 1.3; 
+              color: black; 
+              background: white;
+              padding: 10px;
+            }
+            @page { 
+              margin: 0; 
+              size: 80mm auto;
+            }
+            h1 { font-size: 16px; font-weight: bold; }
+            h2 { font-size: 13px; font-weight: bold; }
+            .text-xl { font-size: 13px; }
+            .text-lg { font-size: 11px; }
+            .text-sm { font-size: 10px; }
+            .text-xs { font-size: 9px; }
+            .text-2xl { font-size: 18px; }
+            .font-bold { font-weight: bold; }
+            .text-right { text-align: right; }
+            .text-center { text-align: center; }
+            .text-red-600 { color: #dc2626; }
+            .text-green-600 { color: #16a34a; }
+            .text-gray-600 { color: #4b5563; }
+            .text-gray-800 { color: #1f2937; }
+            .border-t-4 { border-top: 4px solid #1f2937; }
+            .border-t { border-top: 1px solid #1f2937; }
+            .border-gray-800 { border-color: #1f2937; }
+            table { width: 100%; border-collapse: collapse; margin: 8px 0; }
+            th, td { padding: 3px 4px; border: 1px solid #000; text-align: left; }
+            th { background: #f5f5f5; }
+            .border-b-2 { border-bottom: 2px solid #000; }
+            .mb-2 { margin-bottom: 6px; }
+            .mb-4 { margin-bottom: 12px; }
+            .mb-6 { margin-bottom: 18px; }
+            .py-1 { padding-top: 2px; padding-bottom: 2px; }
+            .py-2 { padding-top: 4px; padding-bottom: 4px; }
+            .pt-3 { padding-top: 8px; }
+            .ml-auto { margin-left: auto; }
+            .w-40 { width: 140px; }
+            .flex { display: flex; }
+            .justify-content-flex-end { justify-content: flex-end; }
+            .justify-between { justify-content: space-between; }
+            .grid-cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+            .gap-4 { gap: 12px; }
+            .uppercase { text-transform: uppercase; }
+            .tracking-wider { letter-spacing: 0.05em; }
+          </style>
+        </head>
+        <body>
+          ${printContent.outerHTML}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => printWindow.print(), 250);
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white max-w-4xl w-full max-h-[90vh] overflow-y-auto rounded-lg shadow-2xl">
         {/* Print Template */}
-        <div id="bill-template" className="p-8 print:p-4 print:shadow-none print:max-w-none">
+        <div id="bill-template" className="p-8">
           {/* Header */}
-          <div className="border-b-4 border-primary pb-6 mb-6 print:border-b-2">
+          <div className="border-b-4 border-primary pb-6 mb-6">
             <div className="flex justify-between items-start">
               {type === 'bill' && (
                 <div>
@@ -50,7 +120,7 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
               )}
               {type === 'quotation' && (
                 <div>
-                  <h1 className="text-3xl font-bold text-primary mb-2">QUOTATION</h1>
+                  {/* <h1 className="text-3xl font-bold text-primary mb-2">QUOTATION</h1> */}
                   <p className="text-lg text-gray-600 mb-1">Electrical Materials Estimate</p>
                 </div>
               )}
@@ -75,6 +145,8 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
           </div>
 
           {/* Customer Details */}
+                    <div className="border-t border-gray-300 pt-6">
+
           <div className="grid grid-cols-2 gap-8 mb-6">
             <div>
               <h3 className="text-lg font-semibold mb-3 text-gray-800">Bill To:</h3>
@@ -122,19 +194,20 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
               )}
             </div>
           </div>
+          </div>
 
           {/* Items Table */}
           <div className="mb-6">
             <table className="w-full border-collapse border border-gray-300">
               <thead>
                 <tr className="bg-gray-100">
-                  <th className="border border-gray-300 px-4 py-3 text-left font-semibold">S.No</th>
-                  <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Item Description</th>
-                  <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Qty</th>
-                  <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Unit</th>
-                  <th className="border border-gray-300 px-4 py-3 text-right font-semibold">Rate</th>
-                  <th className="border border-gray-300 px-4 py-3 text-right font-semibold">Discount</th>
-                  <th className="border border-gray-300 px-4 py-3 text-right font-semibold">Amount</th>
+                  <th className="border border-gray-300 px-2 py-1 text-left text-xs font-semibold">S.No</th>
+                  <th className="border border-gray-300 px-2 py-1 text-left text-xs font-semibold">Item Description</th>
+                  <th className="border border-gray-300 px-2 py-1 text-center text-xs font-semibold">Qty</th>
+                  <th className="border border-gray-300 px-2 py-1 text-center text-xs font-semibold">Unit</th>
+                  <th className="border border-gray-300 px-2 py-1 text-right text-xs font-semibold">Rate</th>
+                  <th className="border border-gray-300 px-2 py-1 text-right text-xs font-semibold">Disc</th>
+                  <th className="border border-gray-300 px-2 py-1 text-right text-xs font-semibold">Amount</th>
                 </tr>
               </thead>
               <tbody>
@@ -145,8 +218,8 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
 
                   return (
                     <tr key={item.itemId} className="hover:bg-gray-50">
-                      <td className="border border-gray-300 px-4 py-3 text-center">{index + 1}</td>
-                      <td className="border border-gray-300 px-4 py-3">
+                      <td className="border border-gray-300 px-2 py-1 text-center text-xs">{index + 1}</td>
+                      <td className="border border-gray-300 px-2 py-1">
                         <div>
                           <div className="font-medium">{item.name}</div>
                           {itemDetails && (
@@ -161,13 +234,13 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
                           )}
                         </div>
                       </td>
-                      <td className="border border-gray-300 px-4 py-3 text-center">{item.qty}</td>
-                      <td className="border border-gray-300 px-4 py-3 text-center">{itemDetails?.unit || 'pc'}</td>
-                      <td className="border border-gray-300 px-4 py-3 text-right">{formatCurrency(item.price)}</td>
-                      <td className="border border-gray-300 px-4 py-3 text-right">
+                      <td className="border border-gray-300 px-2 py-1 text-center">{item.qty}</td>
+                      <td className="border border-gray-300 px-2 py-1 text-center">{itemDetails?.unit || 'pc'}</td>
+                      <td className="border border-gray-300 px-2 py-1 text-right">{formatCurrency(item.price)}</td>
+                      <td className="border border-gray-300 px-2 py-1 text-right">
                         {item.discount > 0 ? `${item.discount}% (${formatCurrency(discountAmount)})` : '-'}
                       </td>
-                      <td className="border border-gray-300 px-4 py-3 text-right font-semibold">{formatCurrency(itemTotal)}</td>
+                      <td className="border border-gray-300 px-2 py-1 text-right font-semibold">{formatCurrency(itemTotal)}</td>
                     </tr>
                   );
                 })}
@@ -176,45 +249,43 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
           </div>
 
           {/* Totals */}
-          <div className="flex justify-end mb-6">
-            <div className="w-80">
-              <div className="border-t-2 border-gray-300 pt-4 space-y-2">
-                <div className="flex justify-between">
-                  <span className="font-semibold">Subtotal:</span>
+          <div className="mb-6" style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ width: 160 }}>
+              <div style={{ borderTop: '4px solid #1f2937', paddingTop: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 2, paddingBottom: 2 }}>
+                  <span style={{ color: '#4b5563' }}>Subtotal</span>
                   <span>{formatCurrency(invoice.totalAmount + (invoice.items.reduce((sum, item) => sum + (item.price * item.qty * item.discount / 100), 0)))}</span>
                 </div>
                 {invoice.items.some(item => item.discount > 0) && (
-                  <div className="flex justify-between text-red-600">
-                    <span className="font-semibold">Total Discount:</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 2, paddingBottom: 2, color: '#dc2626' }}>
+                    <span>Discount</span>
                     <span>-{formatCurrency(invoice.items.reduce((sum, item) => sum + (item.price * item.qty * item.discount / 100), 0))}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-lg font-bold border-t border-gray-300 pt-2">
-                  <span>{type === 'quotation' ? 'Estimated Total:' : 'Total Amount:'}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 8, paddingBottom: 4, fontWeight: 'bold', fontSize: 20, borderTop: '1px solid #1f2937', marginTop: 4 }}>
+                  <span>Total</span>
                   <span>{formatCurrency(invoice.totalAmount)}</span>
                 </div>
-                {type === 'bill' && (
-                  <>
-                    <div className="flex justify-between text-green-600 font-semibold">
-                      <span>Amount Paid:</span>
-                      <span>{formatCurrency(invoice.paidAmount)}</span>
-                    </div>
-                    {invoice.totalAmount > invoice.paidAmount && (
-                      <div className="flex justify-between text-red-600 font-semibold border-t border-gray-300 pt-2">
-                        <span>Balance Due:</span>
-                        <span>{formatCurrency(invoice.totalAmount - invoice.paidAmount)}</span>
-                      </div>
-                    )}
-                  </>
+                {type === 'bill' && invoice.paidAmount > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 2, paddingBottom: 2, color: '#16a34a' }}>
+                    <span>Paid</span>
+                    <span>{formatCurrency(invoice.paidAmount)}</span>
+                  </div>
                 )}
-                {type === 'quotation' && (
-                  <div className="text-center text-sm text-blue-600 font-medium mt-2 pt-2 border-t border-gray-300">
-                    This is an estimate only. Final prices may vary based on market conditions.
+                {type === 'bill' && invoice.totalAmount > invoice.paidAmount && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 2, paddingBottom: 2, color: '#dc2626', fontWeight: 600 }}>
+                    <span>Due</span>
+                    <span>{formatCurrency(invoice.totalAmount - invoice.paidAmount)}</span>
                   </div>
                 )}
               </div>
             </div>
           </div>
+          {type === 'quotation' && (
+            <div className="text-center text-sm text-blue-600 font-medium mt-2 pt-2 border-t border-gray-300">
+              This is an estimate only. Final prices may vary based on market conditions.
+            </div>
+          )}
 
           {/* Footer */}
           <div className="border-t border-gray-300 pt-6">
