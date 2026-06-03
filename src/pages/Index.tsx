@@ -7,7 +7,7 @@ import InventoryPage from '@/components/InventoryPage';
 import CustomersPage from '@/components/CustomersPage';
 import ReportsPage from '@/components/ReportsPage';
 import PaymentsPage from '@/components/PaymentsPage';
-import InvoicesPage from '@/components/InvoicesPage';
+// import InvoicesPage from '@/components/InvoicesPage';
 
 type Page = 'dashboard' | 'billing' | 'inventory' | 'customers' | 'reports' | 'payments' | 'invoices';
 
@@ -54,7 +54,7 @@ const Index = () => {
   if (page === 'customers') return <CustomersPage {...commonProps} onBack={goHome} />;
   if (page === 'reports') return <ReportsPage {...commonProps} onBack={goHome} />;
   if (page === 'payments') return <PaymentsPage {...commonProps} onBack={goHome} />;
-  if (page === 'invoices') return <InvoicesPage {...commonProps} onBack={goHome} />;
+  // if (page === 'invoices') return <InvoicesPage {...commonProps} onBack={goHome} />;
 
   return (
     <div className="min-h-screen bg-background">
@@ -62,7 +62,7 @@ const Index = () => {
         <h1 className="heading text-lg tracking-tight">Sri Mahalingam Electricals</h1>
         <span className="text-xs text-muted-foreground">Electrical & Plumbing Store</span>
       </header>
-      <Dashboard invoices={invoices} customerCount={customerCount} itemCount={itemCount} onNavigate={(p) => setPage(p as Page)} />
+      <Dashboard invoices={invoices} items={items} customerCount={customerCount} itemCount={itemCount} onNavigate={(p) => setPage(p as Page)} />
     </div>
   );
 };

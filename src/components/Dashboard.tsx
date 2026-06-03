@@ -1,29 +1,36 @@
 import { useState } from 'react';
-import { Invoice } from '@/types';
+import { Invoice, Item } from '@/types';
 import { LoadingButton } from './ui/loading-button';
 import BillTemplate from './BillTemplate';
 
 interface DashboardProps {
   invoices?: Invoice[];
+  items?: Item[];
   customerCount: number;
   itemCount: number;
   onNavigate: (page: string) => void;
 }
 
-export default function Dashboard({ invoices = [], customerCount, itemCount, onNavigate }: DashboardProps) {
+export default function Dashboard({ invoices = [], items = [], customerCount, itemCount, onNavigate }: DashboardProps) {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
   const today = new Date().toDateString();
   const todayInvoices = invoices.filter(i => new Date(i.createdAt).toDateString() === today);
+  const todaySales = todayInvoices.reduce((s, i) => s + i.totalAmount, 0);
   const todayCollection = todayInvoices.reduce((s, i) => s + i.paidAmount, 0);
-  const totalCredit = invoices.filter(i => i.status !== 'Paid').reduce((s, i) => s + (i.totalAmount - i.paidAmount), 0);
+  // const todayProfit = todayInvoices.reduce((sum, inv) => {
+  //   return sum + inv.items.reduce((s, bi) => {
+  //     const item = items.find(i => i.id === bi.itemId);
+  //     return s + (item ? (bi.price - item.purchasePrice) * bi.qty * (1 - bi.discount / 100) : 0);
+  //   }, 0);
+  // }, 0);
 
-  const recentInvoices = invoices.slice(0, 5);
+  const recentInvoices = invoices.slice(0, 10);
 
   return (
     <div className="p-4 md:p-6 space-y-6 animate-slide-in">
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
          <LoadingButton
             onClick={() => onNavigate('billing')}
             className="rounded-xl p-4 md:p-6 text-left hover:shadow-md transition-shadow group cursor-pointer"
@@ -40,10 +47,10 @@ export default function Dashboard({ invoices = [], customerCount, itemCount, onN
           <div className="heading text-sm">Items</div>
           <div className="mono-num text-2xl font-semibold mt-1">{itemCount}</div>
         </button>
-        <button onClick={() => onNavigate('invoices')} className="card-surface rounded-xl p-4 md:p-6 text-left hover:shadow-md transition-shadow cursor-pointer">
+        {/* <button onClick={() => onNavigate('invoices')} className="card-surface rounded-xl p-4 md:p-6 text-left hover:shadow-md transition-shadow cursor-pointer">
           <div className="heading text-sm">Invoices</div>
           <div className="text-muted-foreground text-xs mt-1">View all</div>
-        </button>
+        </button> */}
         <button onClick={() => onNavigate('payments')} className="card-surface rounded-xl p-4 md:p-6 text-left hover:shadow-md transition-shadow cursor-pointer">
           <div className="heading text-sm">Payments</div>
           <div className="text-muted-foreground text-xs mt-1">Record & track</div>
@@ -54,16 +61,28 @@ export default function Dashboard({ invoices = [], customerCount, itemCount, onN
         </button>
       </div>
 
-      {/* Counters */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="card-surface rounded-xl p-4">
-          <div className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Today's Collection</div>
-          <div className="mono-num text-2xl font-semibold text-success mt-1">₹{todayCollection.toLocaleString('en-IN')}</div>
-          <div className="text-muted-foreground text-xs mt-1">{todayInvoices.length} invoices</div>
-        </div>
-        <div className="card-surface rounded-xl p-4">
-          <div className="text-muted-foreground text-xs font-medium uppercase tracking-wider">Pending Credit</div>
-          <div className="mono-num text-2xl font-semibold text-warning mt-1">₹{totalCredit.toLocaleString('en-IN')}</div>
+      {/* Today's Report */}
+      <div>
+        <h2 className="heading text-sm mb-3">Today's Report</h2>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="card-surface rounded-xl p-4">
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">Total Sales</div>
+            <div className="mono-num text-2xl font-semibold mt-1">₹{todaySales.toLocaleString('en-IN')}</div>
+            <div className="text-xs text-muted-foreground mt-1">{todayInvoices.length} invoices</div>
+          </div>
+          {/* <div className="card-surface rounded-xl p-4">
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">Profit</div>
+            <div className="mono-num text-2xl font-semibold text-success mt-1">₹{todayProfit.toLocaleString('en-IN')}</div>
+            <div className="text-xs text-muted-foreground mt-1">{todayProfit > 0 && todaySales > 0 ? `${(todayProfit / todaySales * 100).toFixed(1)}% margin` : ''}</div>
+          </div> */}
+          <div className="card-surface rounded-xl p-4">
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">Collected</div>
+            <div className="mono-num text-2xl font-semibold text-success mt-1">₹{todayCollection.toLocaleString('en-IN')}</div>
+          </div>
+          <div className="card-surface rounded-xl p-4">
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">Pending</div>
+            <div className="mono-num text-2xl font-semibold text-warning mt-1">₹{(todaySales - todayCollection).toLocaleString('en-IN')}</div>
+          </div>
         </div>
       </div>
 

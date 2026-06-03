@@ -3,6 +3,7 @@ import { useQuery } from 'convex/react';
 import { Invoice, Item } from '@/types';
 import { shopApi } from '@/lib/convex';
 import BillTemplate from './BillTemplate';
+import InvoiceTable from './InvoiceTable';
 import { LoadingButton } from './ui/loading-button';
 
 interface ReportsPageProps {
@@ -10,27 +11,24 @@ interface ReportsPageProps {
 }
 
 export default function ReportsPage({ onBack }: ReportsPageProps) {
-  const [tab, setTab] = useState<'daily' | 'credit' | 'profit' | 'fast' | 'dead' | 'invoices'>('daily');
+  const [tab, setTab] = useState<'overview' | 'credit' | 'fast' | 'dead'>('overview');
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const invoices = (useQuery(shopApi.listInvoices, {}) ?? []) as Invoice[];
   const items = (useQuery(shopApi.listItems, {}) ?? []) as Item[];
 
-  const today = new Date().toDateString();
-  const todayInv = invoices.filter(i => new Date(i.createdAt).toDateString() === today);
-  const todaySales = todayInv.reduce((s, i) => s + i.totalAmount, 0);
-  const todayCollection = todayInv.reduce((s, i) => s + i.paidAmount, 0);
+  // Overall metrics
+  const totalSales = invoices.reduce((s, i) => s + i.totalAmount, 0);
+  const totalCollection = invoices.reduce((s, i) => s + i.paidAmount, 0);
+  // const totalProfit = invoices.reduce((sum, inv) => {
+  //   return sum + inv.items.reduce((s, bi) => {
+  //     const item = items.find(i => i.id === bi.itemId);
+  //     return s + (item ? (bi.price - item.purchasePrice) * bi.qty * (1 - bi.discount / 100) : 0);
+  //   }, 0);
+  // }, 0);
 
   // Credit outstanding
   const creditInv = invoices.filter(i => i.status !== 'Paid');
   const totalOutstanding = creditInv.reduce((s, i) => s + (i.totalAmount - i.paidAmount), 0);
-
-  // Profit (simplified: retail price - purchase price)
-  const todayProfit = todayInv.reduce((sum, inv) => {
-    return sum + inv.items.reduce((s, bi) => {
-      const item = items.find(i => i.id === bi.itemId);
-      return s + (item ? (bi.price - item.purchasePrice) * bi.qty * (1 - bi.discount / 100) : 0);
-    }, 0);
-  }, 0);
 
   // Fast moving: count sales per item
   const itemSales: Record<string, number> = {};
@@ -50,10 +48,8 @@ export default function ReportsPage({ onBack }: ReportsPageProps) {
   });
 
   const tabs = [
-    { key: 'daily', label: 'Daily Sales' },
-    // { key: 'invoices', label: 'All Invoices' },
+    { key: 'overview', label: 'Overview' },
     { key: 'credit', label: 'Credit' },
-    // { key: 'profit', label: 'Profit' },
     { key: 'fast', label: 'Fast Moving' },
     { key: 'dead', label: 'Dead Stock' },
   ] as const;
@@ -75,90 +71,29 @@ export default function ReportsPage({ onBack }: ReportsPageProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
-        {tab === 'daily' && (
+        {tab === 'overview' && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="card-surface rounded-xl p-4">
                 <div className="text-xs text-muted-foreground uppercase tracking-wider">Total Sales</div>
-                <div className="mono-num text-2xl font-semibold mt-1">₹{todaySales.toLocaleString('en-IN')}</div>
-                <div className="text-xs text-muted-foreground mt-1">{todayInv.length} invoices</div>
+                <div className="mono-num text-2xl font-semibold mt-1">₹{totalSales.toLocaleString('en-IN')}</div>
+                <div className="text-xs text-muted-foreground mt-1">{invoices.length} invoices</div>
+              </div>
+              {/* <div className="card-surface rounded-xl p-4">
+                <div className="text-xs text-muted-foreground uppercase tracking-wider">Total Profit</div>
+                <div className="mono-num text-2xl font-semibold text-success mt-1">₹{totalProfit.toLocaleString('en-IN')}</div>
+                <div className="text-xs text-muted-foreground mt-1">{totalProfit > 0 && totalSales > 0 ? `${(totalProfit / totalSales * 100).toFixed(1)}% margin` : ''}</div>
+              </div> */}
+              <div className="card-surface rounded-xl p-4">
+                <div className="text-xs text-muted-foreground uppercase tracking-wider">Total Collected</div>
+                <div className="mono-num text-2xl font-semibold text-success mt-1">₹{totalCollection.toLocaleString('en-IN')}</div>
               </div>
               <div className="card-surface rounded-xl p-4">
-                <div className="text-xs text-muted-foreground uppercase tracking-wider">Profit</div>
-                <div className="mono-num text-2xl font-semibold text-success mt-1">₹{todayProfit.toLocaleString('en-IN')}</div>
-                <div className="text-xs text-muted-foreground mt-1">{todayProfit > 0 ? `${(todayProfit / todaySales * 100).toFixed(1)}% margin` : ''}</div>
-              </div>
-              <div className="card-surface rounded-xl p-4">
-                <div className="text-xs text-muted-foreground uppercase tracking-wider">Collected</div>
-                <div className="mono-num text-2xl font-semibold text-success mt-1">₹{todayCollection.toLocaleString('en-IN')}</div>
-              </div>
-              <div className="card-surface rounded-xl p-4">
-                <div className="text-xs text-muted-foreground uppercase tracking-wider">Pending</div>
-                <div className="mono-num text-2xl font-semibold text-warning mt-1">₹{(todaySales - todayCollection).toLocaleString('en-IN')}</div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wider">Total Pending</div>
+                <div className="mono-num text-2xl font-semibold text-warning mt-1">₹{(totalSales - totalCollection).toLocaleString('en-IN')}</div>
               </div>
             </div>
-            <div className="card-surface rounded-xl">
-              <div className="p-4 border-b border-border heading text-sm">Today's Invoices</div>
-              {todayInv.length === 0 ? (
-                <div className="p-6 text-center text-muted-foreground text-sm">No sales today</div>
-              ) : (
-                <div className="divide-y divide-border">
-                  {todayInv.map(inv => (
-                    <div key={inv.id} className="px-4 py-2.5 flex justify-between text-sm">
-                      <div>
-                        <span className="mono-num text-xs text-muted-foreground">{inv.invoiceNo}</span>
-                        <span className="ml-2">{inv.customerName || 'Walk-in'}</span>
-                      </div>
-                      <span className="mono-num font-semibold">₹{inv.totalAmount.toLocaleString('en-IN')}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {tab === 'invoices' && (
-          <div className="space-y-4">
-            {/* <div className="card-surface rounded-xl">
-              <div className="p-4 border-b border-border heading text-sm">All Invoices ({invoices.length})</div>
-              {invoices.length === 0 ? (
-                <div className="p-6 text-center text-muted-foreground text-sm">No invoices found</div>
-              ) : (
-                <div className="divide-y divide-border max-h-96 overflow-y-auto">
-                  {invoices.map(inv => (
-                    <button key={inv.id} onClick={() => setSelectedInvoice(inv)}
-                      className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors flex justify-between items-center">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="mono-num font-semibold text-sm">{inv.invoiceNo}</span>
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                            inv.status === 'Paid' ? 'bg-success/10 text-success' :
-                            inv.status === 'Partial' ? 'bg-warning/10 text-warning' :
-                            'bg-danger/10 text-danger'
-                          }`}>{inv.status}</span>
-                        </div>
-                        <div className="text-sm text-muted-foreground mt-1">
-                          {inv.customerName || 'Walk-in Customer'}
-                          {inv.buyingForClient && ` • ${inv.buyingForClient}`}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {new Date(inv.createdAt).toLocaleDateString('en-IN')} • {inv.type}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="mono-num font-semibold">₹{inv.totalAmount.toLocaleString('en-IN')}</div>
-                        {inv.status !== 'Paid' && (
-                          <div className="text-xs text-warning">
-                            Due: ₹{(inv.totalAmount - inv.paidAmount).toLocaleString('en-IN')}
-                          </div>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div> */}
+            <InvoiceTable invoices={invoices} onSelect={setSelectedInvoice} />
           </div>
         )}
 
@@ -182,15 +117,6 @@ export default function ReportsPage({ onBack }: ReportsPageProps) {
             </div>
           </div>
         )}
-
-        {/* {tab === 'profit' && (
-          <div className="card-surface rounded-xl p-4">
-            <div className="text-xs text-muted-foreground uppercase tracking-wider">Today's Estimated Profit</div>
-            <div className="mono-num text-3xl font-semibold text-success mt-2">₹{todayProfit.toLocaleString('en-IN')}</div>
-            <div className="text-xs text-muted-foreground mt-2">Based on purchase vs selling price difference</div>
-          </div>
-        )} */}
-
         {tab === 'fast' && (
           <div className="card-surface rounded-xl">
             <div className="p-4 border-b border-border heading text-sm">Top Selling Items</div>
