@@ -1,6 +1,7 @@
 import { Invoice, Item } from '@/types';
 import { useQuery } from 'convex/react';
 import { shopApi } from '@/lib/convex';
+import { LoadingButton } from './ui/loading-button';
 
 interface BillTemplateProps {
   invoice: Invoice;
@@ -37,10 +38,10 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
 
   const handlePrint = () => {
     const printContent = document.getElementById('bill-template');
-    if (!printContent) return;
+    if (!printContent) return Promise.resolve();
     
     const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
+    if (!printWindow) return Promise.resolve();
     
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -142,7 +143,12 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
     `);
     printWindow.document.close();
     printWindow.focus();
-    setTimeout(() => printWindow.print(), 250);
+    return new Promise<void>((resolve) => {
+      setTimeout(() => {
+        printWindow.print();
+        resolve();
+      }, 250);
+    });
   };
 
   return (
@@ -155,8 +161,8 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
             <div className="">
               {type === 'bill' && (
                 // make the below container centered vertically with the invoice details on the right
-                <div className="flex flex-col justify-center text-center">
-                  <h1 className="text-3xl font-bold text-primary mb-2">Sri Mahaligam Electrical and Plumbing</h1>
+                <div className="flex flex-col justify-center ">
+                  <h1 className="text-3xl font-bold text-primary mb-2">Sri Mahaligam Electricals</h1>
                   
                 </div>
               )}
@@ -380,19 +386,19 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
 
         {/* Action Buttons - Hidden in print */}
         <div className="print:hidden bg-gray-50 px-6 py-4 border-t border-gray-200 rounded-b-lg flex justify-between">
-          <button
+          <LoadingButton
             onClick={onClose}
             className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
           >
             Close
-          </button>
+          </LoadingButton>
           <div className="space-x-2">
-            <button
+            <LoadingButton
               onClick={handlePrint}
               className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
             >
               Print Bill
-            </button>
+            </LoadingButton>
             {/* <button
               onClick={() => {
                 const printWindow = window.open('', '_blank');

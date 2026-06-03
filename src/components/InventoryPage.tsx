@@ -4,6 +4,7 @@ import { Item, Category, Unit } from '@/types';
 import { generateId } from '@/lib/id';
 import { shopApi } from '@/lib/convex';
 import { toast } from 'sonner';
+import { LoadingButton } from './ui/loading-button';
 import { Pencil, Trash2 } from 'lucide-react';
 
 interface InventoryPageProps {
@@ -55,13 +56,13 @@ export default function InventoryPage({ onBack }: InventoryPageProps) {
     <div className="h-screen flex flex-col animate-slide-in">
       <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card">
         <div className="flex items-center gap-3">
-          <button onClick={onBack} className="text-muted-foreground hover:text-foreground text-sm">← Back</button>
+          <LoadingButton onClick={onBack} className="text-muted-foreground hover:text-foreground text-sm">← Back</LoadingButton>
           <h1 className="heading text-base">Inventory</h1>
           <span className="mono-num text-xs text-muted-foreground">{items.length} items</span>
         </div>
-        <button onClick={() => { setEditItem(null); setShowForm(true); }} className="px-3 py-1.5 rounded-md text-xs font-medium bg-accent text-accent-foreground">
+        <LoadingButton onClick={() => { setEditItem(null); setShowForm(true); }} className="px-3 py-1.5 rounded-md text-xs font-medium bg-accent text-accent-foreground">
           + Add Item
-        </button>
+        </LoadingButton>
       </div>
 
       <div className="px-4 py-2 flex gap-2 border-b border-border">
@@ -73,10 +74,10 @@ export default function InventoryPage({ onBack }: InventoryPageProps) {
         />
         <div className="flex gap-1">
           {(['all', 'low', 'dead'] as const).map(f => (
-            <button key={f} onClick={() => setFilter(f)}
+            <LoadingButton key={f} onClick={() => setFilter(f)}
               className={`px-3 py-2 rounded-md text-xs font-medium transition-colors ${filter === f ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
               {f === 'all' ? 'All' : f === 'low' ? '⚠ Low Stock' : '💀 Dead Stock'}
-            </button>
+            </LoadingButton>
           ))}
         </div>
       </div>
@@ -106,12 +107,12 @@ export default function InventoryPage({ onBack }: InventoryPageProps) {
                 <td className="px-4 py-2.5 text-right mono-num">₹{item.retailPrice}</td>
                 <td className="px-4 py-2.5 text-right mono-num">₹{item.wholesalePrice}</td>
                 <td className="px-4 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
-                  <button onClick={() => { setEditItem(item); setShowForm(true); }} className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-accent/10 text-accent mr-1">
+                  <LoadingButton onClick={() => { setEditItem(item); setShowForm(true); }} className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-accent/10 text-accent mr-1">
                     <Pencil className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => handleDelete(item.id)} className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-danger/10 text-danger">
+                  </LoadingButton>
+                  <LoadingButton onClick={() => handleDelete(item.id)} className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-danger/10 text-danger">
                     <Trash2 className="w-4 h-4" />
-                  </button>
+                  </LoadingButton>
                 </td>
               </tr>
             ))}
@@ -134,6 +135,17 @@ function ItemForm({ item, onSave, onClose }: { item: Item | null; onSave: (i: It
 
   const set = (k: keyof Item, v: unknown) => setForm(f => ({ ...f, [k]: v }));
 
+  const handleSubmit = () => {
+    if (!form.name) {
+      toast.error('Name required');
+      return Promise.resolve();
+    }
+    const result = onSave(form);
+    return result && typeof (result as Promise<unknown>).then === 'function'
+      ? result
+      : Promise.resolve();
+  };
+
   return (
     <div className="fixed inset-0 bg-foreground/20 flex items-center justify-center z-50" onClick={onClose}>
       <div className="card-elevated rounded-xl w-full max-w-lg p-5 space-y-4 bg-card" onClick={e => e.stopPropagation()}>
@@ -155,11 +167,11 @@ function ItemForm({ item, onSave, onClose }: { item: Item | null; onSave: (i: It
           <input type="number" placeholder="Warranty (months)" value={form.warrantyMonths || ''} onChange={e => set('warrantyMonths', +e.target.value)} className="px-3 py-2 rounded-lg border border-input text-sm mono-num focus:outline-none focus:ring-2 focus:ring-accent" />
         </div>
         <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm bg-muted text-muted-foreground hover:bg-secondary">Cancel</button>
-          <button onClick={() => { if (!form.name) { toast.error('Name required'); return; } onSave(form); }}
+          <LoadingButton onClick={onClose} className="px-4 py-2 rounded-lg text-sm bg-muted text-muted-foreground hover:bg-secondary">Cancel</LoadingButton>
+          <LoadingButton onClick={handleSubmit}
             className="px-4 py-2 rounded-lg text-sm bg-accent text-accent-foreground font-medium hover:opacity-90">
             {item ? 'Update' : 'Add'}
-          </button>
+          </LoadingButton>
         </div>
       </div>
     </div>

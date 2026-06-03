@@ -4,6 +4,7 @@ import { Customer, Payment } from '@/types';
 import { generateId } from '@/lib/id';
 import { shopApi } from '@/lib/convex';
 import { toast } from 'sonner';
+import { LoadingButton } from './ui/loading-button';
 
 interface PaymentsPageProps {
   onBack: () => void;
@@ -22,7 +23,7 @@ export default function PaymentsPage({ onBack }: PaymentsPageProps) {
 
   const handlePayment = async (custId: string, amount: number, method: 'Cash' | 'UPI' | 'Mixed', date: string) => {
     const cust = customers.find(c => c.id === custId);
-    if (!cust) return;
+    if (!cust) return Promise.resolve();
     await applyCustomerPayment({
       invoiceId: null,
       payment: {
@@ -37,21 +38,18 @@ export default function PaymentsPage({ onBack }: PaymentsPageProps) {
     });
     toast.success(`₹${amount.toLocaleString('en-IN')} received from ${cust.name}`);
     setShowForm(false);
+    return Promise.resolve();
   };
 
   return (
     <div className="h-screen flex flex-col animate-slide-in">
       <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card">
         <div className="flex items-center gap-3">
-          <button onClick={onBack} className="text-muted-foreground hover:text-foreground text-sm">← Back</button>
+          <LoadingButton onClick={onBack} className="text-muted-foreground hover:text-foreground text-sm">← Back</LoadingButton>
           <h1 className="heading text-base">Payments</h1>
         </div>
-        <button onClick={() => setShowForm(true)} className="px-3 py-1.5 rounded-md text-xs font-medium bg-accent text-accent-foreground">
-          + Record Payment
-        </button>
       </div>
-
-      <div className="px-4 py-2 border-b border-border">
+      <div className="px-4 py-2 border-t border-border">
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search payments..."
           className="w-full px-3 py-2 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
       </div>
@@ -102,13 +100,13 @@ function PaymentForm({ customers, onSave, onClose }: {
             <input value={custSearch} onChange={e => setCustSearch(e.target.value)} placeholder="Search customer..."
               className="w-full px-3 py-2 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" autoFocus />
             <div className="mt-2 max-h-40 overflow-y-auto divide-y divide-border card-surface rounded-lg">
-              {filtered.map(c => (
-                <button key={c.id} onClick={() => setCustId(c.id)}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex justify-between">
-                  <span>{c.name}</span>
-                  <span className="mono-num text-warning">₹{c.totalCredit.toLocaleString('en-IN')}</span>
-                </button>
-              ))}
+{filtered.map(c => (
+                 <LoadingButton key={c.id} onClick={() => { setCustId(c.id); return Promise.resolve(); }}
+                   className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex justify-between">
+                   <span>{c.name}</span>
+                   <span className="mono-num text-warning">₹{c.totalCredit.toLocaleString('en-IN')}</span>
+                 </LoadingButton>
+               ))}
               {filtered.length === 0 && <div className="p-3 text-center text-muted-foreground text-xs">No customers with credit</div>}
             </div>
           </div>
@@ -127,22 +125,22 @@ function PaymentForm({ customers, onSave, onClose }: {
             </div>
             <div className="flex gap-1.5">
               {(['Cash', 'UPI', 'Mixed'] as const).map(m => (
-                <button key={m} onClick={() => setMethod(m)}
+                <LoadingButton key={m} onClick={() => { setMethod(m); return Promise.resolve(); }}
                   className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors ${method === m ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
                   {m}
-                </button>
+                </LoadingButton>
               ))}
             </div>
             <div className="flex justify-end gap-2">
-              <button onClick={() => setCustId('')} className="px-4 py-2 rounded-lg text-sm bg-muted text-muted-foreground">Back</button>
-              <button onClick={() => {
+              <LoadingButton onClick={() => { setCustId(''); return Promise.resolve(); }} className="px-4 py-2 rounded-lg text-sm bg-muted text-muted-foreground">Back</LoadingButton>
+              <LoadingButton onClick={() => {
                 const a = parseFloat(amount);
-                if (!a || a <= 0) { toast.error('Enter valid amount'); return; }
-                if (!paymentDate) { toast.error('Select a date'); return; }
-                onSave(custId, a, method, paymentDate);
+                if (!a || a <= 0) { toast.error('Enter valid amount'); return Promise.resolve(); }
+                if (!paymentDate) { toast.error('Select a date'); return Promise.resolve(); }
+                return onSave(custId, a, method, paymentDate);
               }} className="px-4 py-2 rounded-lg text-sm bg-success text-success-foreground font-medium">
                 Record ₹{parseFloat(amount || '0').toLocaleString('en-IN')}
-              </button>
+              </LoadingButton>
             </div>
           </div>
         )}

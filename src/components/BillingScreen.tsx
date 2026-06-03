@@ -5,6 +5,7 @@ import { generateId } from '@/lib/id';
 import { shopApi } from '@/lib/convex';
 import { toast } from 'sonner';
 import BillTemplate from './BillTemplate';
+import { LoadingButton } from './ui/loading-button';
 
 interface BillingScreenProps {
   onBack: () => void;
@@ -60,9 +61,9 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
         event.preventDefault();
         setMode((currentMode) => currentMode === 'Retail' ? 'Wholesale' : 'Retail');
       }
-      if (event.key === 'Escape') {
-        onBack();
-      }
+      // if (event.key === 'Escape') {
+      //   onBack();
+      // }
       if (event.key === 'F5') {
         event.preventDefault();
         void handleSave();
@@ -211,11 +212,11 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
   const handleAddCustomer = async () => {
     if (!newCustomerName.trim()) {
       toast.error('Customer name required');
-      return;
+      return Promise.resolve();
     }
     if (!newCustomerPhone.trim()) {
       toast.error('Phone required');
-      return;
+      return Promise.resolve();
     }
 
     const customer: Customer = {
@@ -240,11 +241,11 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
 
   const handleAddClient = async () => {
     if (!selectedCustomer) {
-      return;
+      return Promise.resolve();
     }
     if (!newClientName.trim()) {
       toast.error('Client name required');
-      return;
+      return Promise.resolve();
     }
 
     const client: Client = {
@@ -268,37 +269,37 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
     <div className="h-screen flex flex-col animate-slide-in">
       <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card">
         <div className="flex items-center gap-3">
-          <button onClick={onBack} className="text-muted-foreground hover:text-foreground text-sm">← Back</button>
+          <LoadingButton onClick={onBack} className="text-muted-foreground hover:text-foreground text-sm">← Back</LoadingButton>
           <h1 className="heading text-base">New {templateType === 'bill' ? 'Bill' : 'Quotation'}</h1>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex bg-muted rounded-md p-0.5">
-            <button
+            <LoadingButton
               onClick={() => setTemplateType('bill')}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${templateType === 'bill' ? 'bg-white text-gray-900 shadow-sm' : 'text-muted-foreground'}`}
             >
               Bill
-            </button>
-            <button
+            </LoadingButton>
+            <LoadingButton
               onClick={() => setTemplateType('quotation')}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${templateType === 'quotation' ? 'bg-white text-gray-900 shadow-sm' : 'text-muted-foreground'}`}
             >
               Quotation
-            </button>
+            </LoadingButton>
           </div>
 
-          <button
+          <LoadingButton
             onClick={() => setMode('Retail')}
             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${mode === 'Retail' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
           >
             Retail
-          </button>
-          <button
+          </LoadingButton>
+          <LoadingButton
             onClick={() => { setMode('Wholesale'); setTimeout(() => customerSearchRef.current?.focus(), 100); }}
             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${mode === 'Wholesale' ? 'bg-accent text-accent-foreground' : 'bg-muted text-muted-foreground'}`}
           >
             Wholesale <kbd className="hotkey ml-1">Alt+W</kbd>
-          </button>
+          </LoadingButton>
         </div>
       </div>
 
@@ -322,7 +323,7 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
                   </div>
                   <div className="text-xs text-muted-foreground">
                     Credit: <span className="mono-num font-semibold text-warning">₹{selectedCustomer.totalCredit.toLocaleString('en-IN')}</span>
-                    <button onClick={() => setSelectedCustomerId(null)} className="ml-3 text-danger hover:underline">Change</button>
+                    <LoadingButton onClick={() => setSelectedCustomerId(null)} className="ml-3 text-danger hover:underline">Change</LoadingButton>
                   </div>
                 </div>
               ) : (
@@ -338,19 +339,19 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
                           className="flex-1 px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                           autoFocus
                         />
-                        <button onClick={() => setShowAddCustomer(true)} className="px-2 py-2 rounded-lg bg-accent text-accent-foreground text-xs font-medium whitespace-nowrap">+ New</button>
+                        <LoadingButton onClick={() => setShowAddCustomer(true)} className="px-2 py-2 rounded-lg bg-accent text-accent-foreground text-xs font-medium whitespace-nowrap">+ New</LoadingButton>
                       </div>
                       {filteredCustomers.length > 0 && (
                         <div className="mt-1 card-elevated rounded-lg max-h-40 overflow-y-auto">
                           {filteredCustomers.map((customer) => (
-                            <button
+                            <LoadingButton
                               key={customer.id}
                               onClick={() => { setSelectedCustomerId(customer.id); setCustomerSearch(''); }}
                               className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex justify-between"
                             >
                               <span>{customer.name} <span className="text-muted-foreground">({customer.phone})</span></span>
                               <span className="mono-num text-xs text-muted-foreground">₹{customer.totalCredit.toLocaleString('en-IN')}</span>
-                            </button>
+                            </LoadingButton>
                           ))}
                         </div>
                       )}
@@ -366,8 +367,8 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
                       </div>
                       <input value={newCustomerCreditLimit} onChange={(event) => setNewCustomerCreditLimit(event.target.value)} placeholder="Credit limit" type="number" className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
                       <div className="flex justify-end gap-2">
-                        <button onClick={() => { setNewCustomerName(''); setNewCustomerPhone(''); setNewCustomerIsElectrician(false); setNewCustomerCreditLimit('50000'); setShowAddCustomer(false); }} className="px-3 py-1.5 rounded-md text-xs bg-muted text-muted-foreground">Cancel</button>
-                        <button onClick={() => void handleAddCustomer()} className="px-3 py-1.5 rounded-md text-xs bg-accent text-accent-foreground font-medium">Add Customer</button>
+                        <LoadingButton onClick={() => { setNewCustomerName(''); setNewCustomerPhone(''); setNewCustomerIsElectrician(false); setNewCustomerCreditLimit('50000'); setShowAddCustomer(false); }} className="px-3 py-1.5 rounded-md text-xs bg-muted text-muted-foreground">Cancel</LoadingButton>
+                        <LoadingButton onClick={() => void handleAddCustomer()} className="px-3 py-1.5 rounded-md text-xs bg-accent text-accent-foreground font-medium">Add Customer</LoadingButton>
                       </div>
                     </div>
                   )}
@@ -385,26 +386,26 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
                           placeholder="Search or select client..."
                           className="flex-1 px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                         />
-                        <button onClick={() => setShowAddClient(true)} className="px-2 py-2 rounded-lg bg-accent text-accent-foreground text-xs font-medium whitespace-nowrap">+ New</button>
+                        <LoadingButton onClick={() => setShowAddClient(true)} className="px-2 py-2 rounded-lg bg-accent text-accent-foreground text-xs font-medium whitespace-nowrap">+ New</LoadingButton>
                       </div>
                       {buyingForClient && (
                         <div className="mt-1 flex items-center gap-2 px-2 py-1.5 rounded-lg bg-accent/10 text-sm">
                           <span className="text-accent font-medium">Client:</span>
                           <span>{buyingForClient}</span>
-                          <button onClick={() => setBuyingForClient('')} className="ml-auto text-danger text-xs hover:underline">×</button>
+                          <LoadingButton onClick={() => setBuyingForClient('')} className="ml-auto text-danger text-xs hover:underline">×</LoadingButton>
                         </div>
                       )}
                       {!buyingForClient && (
                         <div className="mt-1 card-elevated rounded-lg max-h-32 overflow-y-auto">
                           {clients.filter((client) => client.name.toLowerCase().includes(clientSearch.toLowerCase())).map((client) => (
-                            <button
+                            <LoadingButton
                               key={client.id}
                               onClick={() => { setBuyingForClient(client.name); setClientSearch(''); }}
                               className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex justify-between"
                             >
                               <span>{client.name}</span>
                               <span className="text-xs text-muted-foreground">{client.address}</span>
-                            </button>
+                            </LoadingButton>
                           ))}
                           {clients.filter((client) => client.name.toLowerCase().includes(clientSearch.toLowerCase())).length === 0 && (
                             <div className="p-2 text-center text-muted-foreground text-xs">No clients found. Click "+ New" to add.</div>
@@ -419,8 +420,8 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
                       <input value={newClientPhone} onChange={(event) => setNewClientPhone(event.target.value)} placeholder="Phone (optional)" className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
                       <input value={newClientAddress} onChange={(event) => setNewClientAddress(event.target.value)} placeholder="Address / Project details" className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
                       <div className="flex justify-end gap-2">
-                        <button onClick={() => setShowAddClient(false)} className="px-3 py-1.5 rounded-md text-xs bg-muted text-muted-foreground">Cancel</button>
-                        <button onClick={() => void handleAddClient()} className="px-3 py-1.5 rounded-md text-xs bg-accent text-accent-foreground font-medium">Add Client</button>
+                        <LoadingButton onClick={() => setShowAddClient(false)} className="px-3 py-1.5 rounded-md text-xs bg-muted text-muted-foreground">Cancel</LoadingButton>
+                        <LoadingButton onClick={() => void handleAddClient()} className="px-3 py-1.5 rounded-md text-xs bg-accent text-accent-foreground font-medium">Add Client</LoadingButton>
                       </div>
                     </div>
                   )}
@@ -451,7 +452,7 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
           <div className="flex-1 overflow-y-auto">
             {searchFocused || search ? (
               (search ? filteredItems : items.slice(0, 30)).map((item) => (
-                <button
+                <LoadingButton
                   key={item.id}
                   onMouseDown={() => setIsClickingItem(true)}
                   onMouseUp={() => setIsClickingItem(false)}
@@ -469,7 +470,7 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
                     <span className="text-xs text-muted-foreground">{item.stock} {item.unit}</span>
                     <span className="mono-num font-semibold">₹{(mode === 'Retail' ? item.retailPrice : item.wholesalePrice).toLocaleString('en-IN')}</span>
                   </div>
-                </button>
+                </LoadingButton>
               ))
             ) : (
               <div className="p-8 text-center text-muted-foreground text-sm">Click search or start typing to see items</div>
@@ -491,10 +492,10 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
                   <div key={billItem.itemId} className="px-3 py-2.5 text-sm">
                     <div className="flex items-center justify-between">
                       <span className="font-medium truncate flex-1">{billItem.name}</span>
-                      <button onClick={() => removeFromBill(billItem.itemId)} className="text-danger text-xs ml-2 hover:underline">×</button>
+                      <LoadingButton onClick={() => removeFromBill(billItem.itemId)} className="text-danger text-xs ml-2 hover:underline">×</LoadingButton>
                     </div>
                     <div className="flex items-center gap-2 mt-1.5">
-                      <button onClick={() => updateQty(billItem.itemId, -1)} className="w-6 h-6 rounded bg-muted text-foreground text-xs flex items-center justify-center hover:bg-secondary">−</button>
+                      <LoadingButton onClick={() => updateQty(billItem.itemId, -1)} className="w-6 h-6 rounded bg-muted text-foreground text-xs flex items-center justify-center hover:bg-secondary">−</LoadingButton>
                       <input
                         type="number"
                         value={billItem.qty}
@@ -503,7 +504,7 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
                         className="mono-num text-xs w-12 px-1 py-1 text-center rounded bg-muted border border-input focus:outline-none focus:ring-1 focus:ring-accent"
                         min="0"
                       />
-                      <button onClick={() => updateQty(billItem.itemId, 1)} className="w-6 h-6 rounded bg-muted text-foreground text-xs flex items-center justify-center hover:bg-secondary">+</button>
+                      <LoadingButton onClick={() => updateQty(billItem.itemId, 1)} className="w-6 h-6 rounded bg-muted text-foreground text-xs flex items-center justify-center hover:bg-secondary">+</LoadingButton>
                       <span className="text-muted-foreground text-xs mx-1">×</span>
                       {mode === 'Wholesale' ? (
                         <input type="number" value={billItem.price} onChange={(event) => updatePrice(billItem.itemId, parseFloat(event.target.value) || 0)} className="mono-num w-20 px-2 py-1 text-xs rounded bg-muted border border-input" />
@@ -547,13 +548,13 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
 
             <div className="flex gap-1.5">
               {(['Cash', 'UPI', 'Mixed', ...(mode === 'Wholesale' ? ['Credit'] : [])] as PaymentMethod[]).map((methodOption) => (
-                <button
+                <LoadingButton
                   key={methodOption}
                   onClick={() => setPaymentMethod(methodOption)}
                   className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors ${paymentMethod === methodOption ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-secondary'}`}
                 >
                   {methodOption}
-                </button>
+                </LoadingButton>
               ))}
             </div>
 
@@ -567,12 +568,12 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
               />
             )}
 
-            <button
+            <LoadingButton
               onClick={() => void handleSave()}
               className="w-full py-3 rounded-lg bg-accent text-accent-foreground font-semibold text-sm hover:opacity-90 transition-opacity"
             >
               Save & Print {templateType === 'quotation' ? 'Quotation' : 'Bill'} <kbd className="hotkey ml-2 bg-accent-foreground/20 border-accent-foreground/30 text-accent-foreground/80">F5</kbd>
-            </button>
+            </LoadingButton>
           </div>
         </div>
       </div>

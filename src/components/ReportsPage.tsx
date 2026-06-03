@@ -3,6 +3,7 @@ import { useQuery } from 'convex/react';
 import { Invoice, Item } from '@/types';
 import { shopApi } from '@/lib/convex';
 import BillTemplate from './BillTemplate';
+import { LoadingButton } from './ui/loading-button';
 
 interface ReportsPageProps {
   onBack: () => void;
@@ -60,7 +61,7 @@ export default function ReportsPage({ onBack }: ReportsPageProps) {
   return (
     <div className="h-screen flex flex-col animate-slide-in">
       <div className="flex items-center gap-3 px-4 py-2 border-b border-border bg-card">
-        <button onClick={onBack} className="text-muted-foreground hover:text-foreground text-sm">← Back</button>
+         <LoadingButton onClick={onBack} className="text-muted-foreground hover:text-foreground text-sm">← Back</LoadingButton>
         <h1 className="heading text-base">Reports</h1>
       </div>
 

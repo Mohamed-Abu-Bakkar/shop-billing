@@ -5,6 +5,7 @@ import { generateId } from '@/lib/id';
 import { shopApi } from '@/lib/convex';
 import { toast } from 'sonner';
 import { Pencil, Trash2, Eye } from 'lucide-react';
+import { LoadingButton } from './ui/loading-button';
 
 interface CustomersPageProps {
   onBack: () => void;
@@ -52,21 +53,21 @@ export default function CustomersPage({ onBack }: CustomersPageProps) {
     <div className="h-screen flex flex-col animate-slide-in">
       <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card">
         <div className="flex items-center gap-3">
-          <button
+          <LoadingButton
             onClick={selectedCust ? () => { setSelectedCustomerId(null); setActiveTab('history'); } : onBack}
             className="text-muted-foreground hover:text-foreground text-sm"
           >
             ← Back
-          </button>
+          </LoadingButton>
           <h1 className="heading text-base">{selectedCust ? selectedCust.name : 'Customers'}</h1>
         </div>
         {!selectedCust && (
-          <button
+          <LoadingButton
             onClick={() => { setEditCust(null); setShowForm(true); }}
             className="px-3 py-1.5 rounded-md text-xs font-medium bg-accent text-accent-foreground"
           >
             + Add Customer
-          </button>
+          </LoadingButton>
         )}
       </div>
 
@@ -96,7 +97,7 @@ export default function CustomersPage({ onBack }: CustomersPageProps) {
 
           <div className="flex gap-1 bg-muted rounded-lg p-1">
             {(['history', ...(selectedCust.isElectrician ? ['clients'] : []), 'payments'] as const).map((tab) => (
-              <button
+              <LoadingButton
                 key={tab}
                 onClick={() => setActiveTab(tab as typeof activeTab)}
                 className={`flex-1 py-2 rounded-md text-xs font-medium transition-colors capitalize ${
@@ -104,7 +105,7 @@ export default function CustomersPage({ onBack }: CustomersPageProps) {
                 }`}
               >
                 {tab === 'history' ? 'Transactions' : tab === 'clients' ? 'Clients' : 'Pay Credit'}
-              </button>
+              </LoadingButton>
             ))}
           </div>
 
@@ -161,18 +162,18 @@ export default function CustomersPage({ onBack }: CustomersPageProps) {
                       </span>
                     </td>
                     <td className="px-4 py-2.5 text-right">
-                      <button
+                      <LoadingButton
                         onClick={(e) => { e.stopPropagation(); setEditCust(customer); setShowForm(true); }}
                         className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-accent/10 text-accent mr-1"
                       >
                         <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
+                      </LoadingButton>
+                      <LoadingButton
                         onClick={(e) => { e.stopPropagation(); handleDelete(customer.id, customer.name); }}
                         className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-danger/10 text-danger"
                       >
                         <Trash2 className="w-4 h-4" />
-                      </button>
+                      </LoadingButton>
                     </td>
                   </tr>
                 ))}
@@ -255,7 +256,7 @@ function ClientManager({ customerId }: { customerId: string }) {
   const handleSave = async () => {
     if (!name.trim()) {
       toast.error('Client name required');
-      return;
+      return Promise.resolve();
     }
     if (editClient) {
       await updateClient({
@@ -288,15 +289,16 @@ function ClientManager({ customerId }: { customerId: string }) {
   const handleDelete = async (id: string, clientName: string) => {
     await removeClient({ id });
     toast.success(`Client "${clientName}" removed`);
+    return Promise.resolve();
   };
 
   return (
     <div className="card-surface rounded-xl">
       <div className="p-4 border-b border-border flex items-center justify-between">
         <h2 className="heading text-sm">Clients (buying for)</h2>
-        <button onClick={() => setShowAdd(!showAdd)} className="px-3 py-1.5 rounded-md text-xs font-medium bg-accent text-accent-foreground">
+        <LoadingButton onClick={() => setShowAdd(!showAdd)} className="px-3 py-1.5 rounded-md text-xs font-medium bg-accent text-accent-foreground">
           + Add Client
-        </button>
+        </LoadingButton>
       </div>
 
       {showAdd && (
@@ -321,10 +323,10 @@ function ClientManager({ customerId }: { customerId: string }) {
             className="w-full px-3 py-2 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent"
           />
           <div className="flex justify-end gap-2">
-            <button onClick={resetForm} className="px-3 py-1.5 rounded-md text-xs bg-muted text-muted-foreground">Cancel</button>
-            <button onClick={handleSave} className="px-3 py-1.5 rounded-md text-xs bg-accent text-accent-foreground font-medium">
+            <LoadingButton onClick={resetForm} className="px-3 py-1.5 rounded-md text-xs bg-muted text-muted-foreground">Cancel</LoadingButton>
+            <LoadingButton onClick={handleSave} className="px-3 py-1.5 rounded-md text-xs bg-accent text-accent-foreground font-medium">
               {editClient ? 'Update' : 'Add'}
-            </button>
+            </LoadingButton>
           </div>
         </div>
       )}
@@ -341,12 +343,12 @@ function ClientManager({ customerId }: { customerId: string }) {
                 {client.address && <span className="text-muted-foreground text-xs ml-2">· {client.address}</span>}
               </div>
               <div className="flex items-center gap-1">
-                <button onClick={() => handleEdit(client)} className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-accent/10 text-accent">
+                <LoadingButton onClick={() => handleEdit(client)} className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-accent/10 text-accent">
                   <Pencil className="w-4 h-4" />
-                </button>
-                <button onClick={() => handleDelete(client.id, client.name)} className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-danger/10 text-danger">
+                </LoadingButton>
+                <LoadingButton onClick={() => handleDelete(client.id, client.name)} className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-danger/10 text-danger">
                   <Trash2 className="w-4 h-4" />
-                </button>
+                </LoadingButton>
               </div>
             </div>
           ))}
@@ -370,11 +372,11 @@ function CreditPayment({ customer, unpaidInvoices }: { customer: Customer; unpai
     const paymentAmount = parseFloat(amount);
     if (!paymentAmount || paymentAmount <= 0) {
       toast.error('Enter valid amount');
-      return;
+      return Promise.resolve();
     }
     if (!paymentDate) {
       toast.error('Select a date');
-      return;
+      return Promise.resolve();
     }
 
     await applyCustomerPayment({
@@ -393,6 +395,7 @@ function CreditPayment({ customer, unpaidInvoices }: { customer: Customer; unpai
     toast.success(`₹${paymentAmount.toLocaleString('en-IN')} recorded for ${customer.name}`);
     setAmount('');
     setSelectedInvId(null);
+    return Promise.resolve();
   };
 
   return (
@@ -408,9 +411,13 @@ function CreditPayment({ customer, unpaidInvoices }: { customer: Customer; unpai
             {unpaidInvoices.map((invoice) => {
               const due = invoice.totalAmount - invoice.paidAmount;
               return (
-                <button
+                <LoadingButton
                   key={invoice.id}
-                  onClick={() => { setSelectedInvId(invoice.id); setAmount(String(due)); }}
+                  onClick={() => {
+                    setSelectedInvId(invoice.id);
+                    setAmount(String(due));
+                    return Promise.resolve();
+                  }}
                   className={`w-full text-left px-4 py-3 text-sm hover:bg-muted/30 transition-colors ${
                     selectedInvId === invoice.id ? 'bg-accent/10 ring-1 ring-accent' : ''
                   }`}
@@ -436,7 +443,7 @@ function CreditPayment({ customer, unpaidInvoices }: { customer: Customer; unpai
                   <div className="text-xs text-muted-foreground mt-1">
                     Total: ₹{invoice.totalAmount.toLocaleString('en-IN')} | Paid: ₹{invoice.paidAmount.toLocaleString('en-IN')}
                   </div>
-                </button>
+                </LoadingButton>
               );
             })}
           </div>
@@ -469,26 +476,29 @@ function CreditPayment({ customer, unpaidInvoices }: { customer: Customer; unpai
         </div>
         <div className="flex gap-1.5">
           {(['Cash', 'UPI', 'Mixed'] as const).map((paymentMethod) => (
-            <button
+            <LoadingButton
               key={paymentMethod}
-              onClick={() => setMethod(paymentMethod)}
+              onClick={() => {
+                setMethod(paymentMethod);
+                return Promise.resolve();
+              }}
               className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors ${
                 method === paymentMethod ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
               }`}
             >
               {paymentMethod}
-            </button>
+            </LoadingButton>
           ))}
         </div>
         <div className="flex gap-2">
           {selectedInvId && (
-            <button onClick={() => { setSelectedInvId(null); setAmount(''); }} className="px-4 py-2.5 rounded-lg text-sm bg-muted text-muted-foreground flex-1">
+            <LoadingButton onClick={() => { setSelectedInvId(null); setAmount(''); return Promise.resolve(); }} className="px-4 py-2.5 rounded-lg text-sm bg-muted text-muted-foreground flex-1">
               General Payment
-            </button>
+            </LoadingButton>
           )}
-          <button onClick={() => void handlePay()} className="px-4 py-2.5 rounded-lg text-sm bg-success text-success-foreground font-medium flex-1">
+          <LoadingButton onClick={() => void handlePay()} className="px-4 py-2.5 rounded-lg text-sm bg-success text-success-foreground font-medium flex-1">
             Record ₹{parseFloat(amount || '0').toLocaleString('en-IN')}
-          </button>
+          </LoadingButton>
         </div>
       </div>
     </div>
@@ -511,6 +521,17 @@ function CustomerForm({ customer, onSave, onClose }: { customer: Customer | null
     setForm((current) => ({ ...current, [key]: value }));
   };
 
+  const handleSubmit = () => {
+    if (!form.name) {
+      toast.error('Name required');
+      return Promise.resolve();
+    }
+    const result = onSave(form);
+    return result && typeof (result as Promise<unknown>).then === 'function'
+      ? result
+      : Promise.resolve();
+  };
+
   return (
     <div className="fixed inset-0 bg-foreground/20 flex items-center justify-center z-50" onClick={onClose}>
       <div className="card-elevated rounded-xl w-full max-w-md p-5 space-y-4 bg-card" onClick={(event) => event.stopPropagation()}>
@@ -528,19 +549,13 @@ function CustomerForm({ customer, onSave, onClose }: { customer: Customer | null
           </select>
         </div>
         <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm bg-muted text-muted-foreground">Cancel</button>
-          <button
-            onClick={() => {
-              if (!form.name) {
-                toast.error('Name required');
-                return;
-              }
-              void onSave(form);
-            }}
+          <LoadingButton onClick={onClose} className="px-4 py-2 rounded-lg text-sm bg-muted text-muted-foreground">Cancel</LoadingButton>
+          <LoadingButton
+            onClick={handleSubmit}
             className="px-4 py-2 rounded-lg text-sm bg-accent text-accent-foreground font-medium"
           >
             {customer ? 'Update' : 'Add'}
-          </button>
+          </LoadingButton>
         </div>
       </div>
     </div>
