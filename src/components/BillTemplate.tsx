@@ -45,63 +45,99 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
-        <head>
-          <title>${invoice.invoiceNo}</title>
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { 
-              font-family: Arial, sans-serif; 
-              font-size: 11px; 
-              line-height: 1.3; 
-              color: black; 
-              background: white;
-              padding: 10px;
-            }
-            @page { 
-              margin: 0; 
-              size: 80mm auto;
-            }
+      <head>
+        <title>${invoice.invoiceNo}</title>
+        <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+          font-family: Arial, sans-serif; 
+          font-size: 11px; 
+          line-height: 1.3; 
+          color: black; 
+          background: white;
+          padding: 10px;
+        }
+        @page { 
+          margin: 0; 
+          size: 80mm auto;
+        }
             h1 { font-size: 16px; font-weight: bold; }
             h2 { font-size: 13px; font-weight: bold; }
+            .text-2xl { font-size: 18px; }
+            .text-3xl { font-size: 20px; }
             .text-xl { font-size: 13px; }
             .text-lg { font-size: 11px; }
             .text-sm { font-size: 10px; }
             .text-xs { font-size: 9px; }
-            .text-2xl { font-size: 18px; }
             .font-bold { font-weight: bold; }
+            .font-semibold { font-weight: 600; }
+            .font-medium { font-weight: 500; }
             .text-right { text-align: right; }
             .text-center { text-align: center; }
+            .text-left { text-align: left; }
             .text-red-600 { color: #dc2626; }
             .text-green-600 { color: #16a34a; }
+            .text-yellow-600 { color: #ca8a04; }
+            .text-blue-600 { color: #2563eb; }
+            .text-gray-500 { color: #6b7280; }
             .text-gray-600 { color: #4b5563; }
             .text-gray-800 { color: #1f2937; }
+            .text-gray-900 { color: #111827; }
+            .text-primary { color: #1f2937; }
+            .bg-gray-50 { background: #f9fafb; }
+            .bg-gray-100 { background: #f3f4f6; }
             .border-t-4 { border-top: 4px solid #1f2937; }
+            .border-b-4 { border-bottom: 4px solid #1f2937; }
             .border-t { border-top: 1px solid #1f2937; }
+            .border-b { border-bottom: 1px solid #1f2937; }
+            .border { border-width: 1px; border-style: solid; border-color: #d1d5db; }
+            .border-gray-400 { border-color: #9ca3af; }
             .border-gray-800 { border-color: #1f2937; }
+            .border-gray-300 { border-color: #d1d5db; }
+            .border-primary { border-color: #1f2937; }
+            .border-collapse { border-collapse: collapse; }
             table { width: 100%; border-collapse: collapse; margin: 8px 0; }
             th, td { padding: 3px 4px; border: 1px solid #000; text-align: left; }
             th { background: #f5f5f5; }
             .border-b-2 { border-bottom: 2px solid #000; }
+            .p-8 { padding: 32px; }
             .mb-2 { margin-bottom: 6px; }
+            .mb-1 { margin-bottom: 4px; }
+            .mb-3 { margin-bottom: 12px; }
             .mb-4 { margin-bottom: 12px; }
             .mb-6 { margin-bottom: 18px; }
+            .mt-2 { margin-top: 8px; }
             .py-1 { padding-top: 2px; padding-bottom: 2px; }
             .py-2 { padding-top: 4px; padding-bottom: 4px; }
+            .px-2 { padding-left: 8px; padding-right: 8px; }
+            .pt-2 { padding-top: 8px; }
+            .pt-6 { padding-top: 24px; }
+            .pb-6 { padding-bottom: 24px; }
             .pt-3 { padding-top: 8px; }
+            .mt-6 { margin-top: 18px; }
+            .mt-8 { margin-top: 24px; }
+            .ml-2 { margin-left: 6px; }
             .ml-auto { margin-left: auto; }
+            .w-full { width: 100%; }
             .w-40 { width: 140px; }
+            .w-48 { width: 192px; }
             .flex { display: flex; }
+            .flex-col { flex-direction: column; }
+            .justify-center { justify-content: center; }
             .justify-content-flex-end { justify-content: flex-end; }
             .justify-between { justify-content: space-between; }
+            .grid { display: grid; }
             .grid-cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
             .gap-4 { gap: 12px; }
+            .gap-8 { gap: 32px; }
+            .space-y-1 > * + * { margin-top: 4px; }
             .uppercase { text-transform: uppercase; }
             .tracking-wider { letter-spacing: 0.05em; }
-          </style>
-        </head>
-        <body>
-          ${printContent.outerHTML}
-        </body>
+        </style>
+      </head>
+      <body>
+        ${printContent.outerHTML}
+      </body>
       </html>
     `);
     printWindow.document.close();
@@ -328,11 +364,11 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
                   )}
                 </ul>
               </div>
-              <div className="text-right">
-                {/* <div className="mb-8">
+              <div className="text-right mt-8">
+                <div className="mt-8 ">
                   <div className="border-b border-gray-400 w-48 ml-auto mb-2"></div>
                   <p className="text-sm">Authorized Signature</p>
-                </div> */}
+                </div>
                 <div className="text-xs text-gray-500">
                   {/* <p>Generated by VoltLedger v1.0</p> */}
                   <p>{type === 'quotation' ? 'We look forward to serving you!' : 'Thank you for your business!'}</p>
