@@ -24,7 +24,18 @@ const Index = () => {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'n' && !e.ctrlKey && !e.altKey && !e.metaKey && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+      const targetTag = document.activeElement?.tagName;
+      const isTyping = targetTag === 'INPUT' || targetTag === 'TEXTAREA' || document.activeElement?.getAttribute('contenteditable') === 'true';
+
+      if (isTyping) return;
+
+      if (e.ctrlKey && (e.key === 'b' || e.key === 'B')) {
+        e.preventDefault();
+        setPage('dashboard');
+        return;
+      }
+
+      if (e.key === 'n' && !e.ctrlKey && !e.altKey && !e.metaKey) {
         e.preventDefault();
         setPage('billing');
       }
