@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Invoice } from '@/types';
 import { LoadingButton } from './ui/loading-button';
+import BillTemplate from './BillTemplate';
 
 interface DashboardProps {
   invoices?: Invoice[];
@@ -9,6 +11,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ invoices = [], customerCount, itemCount, onNavigate }: DashboardProps) {
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
   const today = new Date().toDateString();
   const todayInvoices = invoices.filter(i => new Date(i.createdAt).toDateString() === today);
@@ -70,7 +73,8 @@ export default function Dashboard({ invoices = [], customerCount, itemCount, onN
         ) : (
           <div className="divide-y divide-border">
             {recentInvoices.map(inv => (
-              <div key={inv.id} className="px-4 py-3 flex items-center justify-between text-sm">
+              <button key={inv.id} onClick={() => setSelectedInvoice(inv)}
+                className="w-full text-left px-4 py-3 flex items-center justify-between text-sm hover:bg-muted/50 transition-colors">
                 <div className="flex items-center gap-3">
                   <span className="mono-num text-muted-foreground text-xs">{inv.invoiceNo}</span>
                   <span className="font-medium">{inv.customerName || 'Walk-in'}</span>
@@ -86,13 +90,18 @@ export default function Dashboard({ invoices = [], customerCount, itemCount, onN
                   }`}>{inv.status}</span>
                   <span className="mono-num font-semibold">₹{inv.totalAmount.toLocaleString('en-IN')}</span>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}
       </div>
 
-
+      {selectedInvoice && (
+        <BillTemplate
+          invoice={selectedInvoice}
+          onClose={() => setSelectedInvoice(null)}
+        />
+      )}
     </div>
   );
 }
