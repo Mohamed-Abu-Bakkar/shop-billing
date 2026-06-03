@@ -10,12 +10,20 @@ interface BillTemplateProps {
 
 export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTemplateProps) {
   const items = (useQuery(shopApi.listItems, {}) ?? []) as Item[];
+  const hasDiscount = invoice.items.some(item => item.discount > 0);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-IN', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
+    });
+  };
+
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
@@ -108,37 +116,39 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
         <div id="bill-template" className="p-8">
           {/* Header */}
           <div className="border-b-4 border-primary pb-6 mb-6">
-            <div className="flex justify-between items-start">
+            <div className="">
               {type === 'bill' && (
-                <div>
-                  <h1 className="text-3xl font-bold text-primary mb-2">Sri Mahalingam Electricals</h1>
-                  <p className="text-lg text-gray-600 mb-1">Electrical & Plumbing Store</p>
-                  <p className="text-sm text-gray-500">GSTIN: 33ADWPJ5940P1ZR</p>
-                  <p className="text-sm text-gray-500">Phone: 99421 94751</p>
-                  <p className="text-sm text-gray-500">Email: jaimaha772@gmail.com</p>
+                // make the below container centered vertically with the invoice details on the right
+                <div className="flex flex-col justify-center text-center">
+                  <h1 className="text-3xl font-bold text-primary mb-2">Sri Mahaligam Electrical and Plumbing</h1>
+                  
                 </div>
               )}
               {type === 'quotation' && (
                 <div>
                   {/* <h1 className="text-3xl font-bold text-primary mb-2">QUOTATION</h1> */}
-                  <p className="text-lg text-gray-600 mb-1">Electrical Materials Estimate</p>
+                  <p className="text-lg text-gray-600 mb-1">Materials Estimate</p>
                 </div>
               )}
-              <div className="text-right">
-                <div className="text-4xl font-bold text-primary mb-2">
-                  {type === 'quotation' ? 'QUOTATION' : invoice.invoiceNo}
+              <div className="flex justify-between">
+                <div>
+                  {/* <p className="text-lg text-gray-600 mb-1">Plumbing Store</p> */}
+                  <p className="text-sm text-gray-500">GSTIN: 33ADWPJ5940P1ZR</p>
+                  <p className="text-sm text-gray-500">Phone: 99421 94751</p>
+                  <p className="text-sm text-gray-500">Email: jaimaha772@gmail.com</p>
                 </div>
-                <div className="text-sm text-gray-600">
-                  <div>Date: {formatDate(invoice.createdAt)}</div>
-                  <div>Type: <span className="font-semibold">{invoice.type}</span></div>
-                  {type === 'bill' && (
-                    <div>Status: <span className={`font-semibold ${invoice.status === 'Paid' ? 'text-green-600' : invoice.status === 'Partial' ? 'text-yellow-600' : 'text-red-600'}`}>
-                      {invoice.status}
-                    </span></div>
-                  )}
-                  {/* {type === 'quotation' && (
-                    <div className="text-blue-600 font-semibold">Valid for 30 days</div>
-                  )} */}
+                <div className="">
+                 
+                  <div className="text-sm text-gray-600">
+                    <div>Date: {formatDate(invoice.createdAt)}</div>
+                    <div>Time: {formatTime(invoice.createdAt)}</div>
+                    <div>Type: <span className="font-semibold">{invoice.type}</span></div>
+                    {type === 'bill' && (
+                      <div>Status: <span className={`font-semibold ${invoice.status === 'Paid' ? 'text-green-600' : invoice.status === 'Partial' ? 'text-yellow-600' : 'text-red-600'}`}>
+                        {invoice.status}
+                      </span></div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -154,11 +164,11 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
                 {invoice.customerName ? (
                   <>
                     <p className="font-semibold text-gray-900">{invoice.customerName}</p>
-                    {type === 'bill' && invoice.customerId && (
+                    {/* {type === 'bill' && invoice.customerId && (
                       <p className="text-sm text-gray-600">
                         Customer ID: {invoice.customerId}
                       </p>
-                    )}
+                    )} */}
                   </>
                 ) : (
                   <p className="font-semibold text-gray-900">Walk-in Customer</p>
@@ -168,6 +178,9 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
                     <span className="font-medium">Client:</span> {invoice.buyingForClient}
                   </p>
                 )}
+                 <div className="text font-bold text-primary mb-2">
+                    {type === 'quotation' ? 'QUOTATION' : invoice.invoiceNo}
+                  </div>
               </div>
             </div>
             <div>
@@ -203,10 +216,11 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
                 <tr className="bg-gray-100">
                   <th className="border border-gray-300 px-2 py-1 text-left text-xs font-semibold">S.No</th>
                   <th className="border border-gray-300 px-2 py-1 text-left text-xs font-semibold">Item Description</th>
-                  <th className="border border-gray-300 px-2 py-1 text-center text-xs font-semibold">Qty</th>
-                  <th className="border border-gray-300 px-2 py-1 text-center text-xs font-semibold">Unit</th>
+                  <th className="border border-gray-300 px-2 py-1 text-center text-xs font-semibold">Qty/Unit</th>
                   <th className="border border-gray-300 px-2 py-1 text-right text-xs font-semibold">Rate</th>
-                  <th className="border border-gray-300 px-2 py-1 text-right text-xs font-semibold">Disc</th>
+                  {hasDiscount && (
+                    <th className="border border-gray-300 px-2 py-1 text-right text-xs font-semibold">Disc</th>
+                  )}
                   <th className="border border-gray-300 px-2 py-1 text-right text-xs font-semibold">Amount</th>
                 </tr>
               </thead>
@@ -224,7 +238,7 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
                           <div className="font-medium">{item.name}</div>
                           {itemDetails && (
                             <div className="text-sm text-gray-500">
-                              Brand: {itemDetails.brand} | Category: {itemDetails.category}
+                              {/* Brand: {itemDetails.brand} | Category: {itemDetails.category} */}
                               {item.warrantyExpiry && (
                                 <span className="ml-2 text-blue-600">
                                   Warranty: {formatDate(item.warrantyExpiry)}
@@ -234,12 +248,15 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
                           )}
                         </div>
                       </td>
-                      <td className="border border-gray-300 px-2 py-1 text-center">{item.qty}</td>
-                      <td className="border border-gray-300 px-2 py-1 text-center">{itemDetails?.unit || 'pc'}</td>
-                      <td className="border border-gray-300 px-2 py-1 text-right">{formatCurrency(item.price)}</td>
-                      <td className="border border-gray-300 px-2 py-1 text-right">
-                        {item.discount > 0 ? `${item.discount}% (${formatCurrency(discountAmount)})` : '-'}
+                      <td className="border border-gray-300 px-2 py-1 text-center">
+                        {item.qty} {itemDetails?.unit || 'pc'}
                       </td>
+                      <td className="border border-gray-300 px-2 py-1 text-right">{formatCurrency(item.price)}</td>
+                      {hasDiscount && (
+                        <td className="border border-gray-300 px-2 py-1 text-right">
+                          {item.discount > 0 ? `${item.discount}% (${formatCurrency(discountAmount)})` : '-'}
+                        </td>
+                      )}
                       <td className="border border-gray-300 px-2 py-1 text-right font-semibold">{formatCurrency(itemTotal)}</td>
                     </tr>
                   );
