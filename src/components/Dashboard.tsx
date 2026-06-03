@@ -23,7 +23,7 @@ export default function Dashboard({ invoices = [], customerCount, itemCount, onN
   return (
     <div className="p-4 md:p-6 space-y-6 animate-slide-in">
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
          <LoadingButton
             onClick={() => onNavigate('billing')}
             className="rounded-xl p-4 md:p-6 text-left hover:shadow-md transition-shadow group cursor-pointer"
@@ -39,6 +39,10 @@ export default function Dashboard({ invoices = [], customerCount, itemCount, onN
         <button onClick={() => onNavigate('inventory')} className="card-surface rounded-xl p-4 md:p-6 text-left hover:shadow-md transition-shadow cursor-pointer">
           <div className="heading text-sm">Items</div>
           <div className="mono-num text-2xl font-semibold mt-1">{itemCount}</div>
+        </button>
+        <button onClick={() => onNavigate('invoices')} className="card-surface rounded-xl p-4 md:p-6 text-left hover:shadow-md transition-shadow cursor-pointer">
+          <div className="heading text-sm">Invoices</div>
+          <div className="text-muted-foreground text-xs mt-1">View all</div>
         </button>
         <button onClick={() => onNavigate('payments')} className="card-surface rounded-xl p-4 md:p-6 text-left hover:shadow-md transition-shadow cursor-pointer">
           <div className="heading text-sm">Payments</div>

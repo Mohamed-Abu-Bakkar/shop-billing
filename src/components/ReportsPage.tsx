@@ -51,9 +51,9 @@ export default function ReportsPage({ onBack }: ReportsPageProps) {
 
   const tabs = [
     { key: 'daily', label: 'Daily Sales' },
-    { key: 'invoices', label: 'All Invoices' },
+    // { key: 'invoices', label: 'All Invoices' },
     { key: 'credit', label: 'Credit' },
-    { key: 'profit', label: 'Profit' },
+    // { key: 'profit', label: 'Profit' },
     { key: 'fast', label: 'Fast Moving' },
     { key: 'dead', label: 'Dead Stock' },
   ] as const;
@@ -77,18 +77,24 @@ export default function ReportsPage({ onBack }: ReportsPageProps) {
       <div className="flex-1 overflow-y-auto p-4">
         {tab === 'daily' && (
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div className="card-surface rounded-xl p-4">
                 <div className="text-xs text-muted-foreground uppercase tracking-wider">Total Sales</div>
                 <div className="mono-num text-2xl font-semibold mt-1">₹{todaySales.toLocaleString('en-IN')}</div>
+                <div className="text-xs text-muted-foreground mt-1">{todayInv.length} invoices</div>
+              </div>
+              <div className="card-surface rounded-xl p-4">
+                <div className="text-xs text-muted-foreground uppercase tracking-wider">Profit</div>
+                <div className="mono-num text-2xl font-semibold text-success mt-1">₹{todayProfit.toLocaleString('en-IN')}</div>
+                <div className="text-xs text-muted-foreground mt-1">{todayProfit > 0 ? `${(todayProfit / todaySales * 100).toFixed(1)}% margin` : ''}</div>
               </div>
               <div className="card-surface rounded-xl p-4">
                 <div className="text-xs text-muted-foreground uppercase tracking-wider">Collected</div>
                 <div className="mono-num text-2xl font-semibold text-success mt-1">₹{todayCollection.toLocaleString('en-IN')}</div>
               </div>
               <div className="card-surface rounded-xl p-4">
-                <div className="text-xs text-muted-foreground uppercase tracking-wider">Invoices</div>
-                <div className="mono-num text-2xl font-semibold mt-1">{todayInv.length}</div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wider">Pending</div>
+                <div className="mono-num text-2xl font-semibold text-warning mt-1">₹{(todaySales - todayCollection).toLocaleString('en-IN')}</div>
               </div>
             </div>
             <div className="card-surface rounded-xl">
@@ -114,7 +120,7 @@ export default function ReportsPage({ onBack }: ReportsPageProps) {
 
         {tab === 'invoices' && (
           <div className="space-y-4">
-            <div className="card-surface rounded-xl">
+            {/* <div className="card-surface rounded-xl">
               <div className="p-4 border-b border-border heading text-sm">All Invoices ({invoices.length})</div>
               {invoices.length === 0 ? (
                 <div className="p-6 text-center text-muted-foreground text-sm">No invoices found</div>
@@ -152,7 +158,7 @@ export default function ReportsPage({ onBack }: ReportsPageProps) {
                   ))}
                 </div>
               )}
-            </div>
+            </div> */}
           </div>
         )}
 
@@ -177,13 +183,13 @@ export default function ReportsPage({ onBack }: ReportsPageProps) {
           </div>
         )}
 
-        {tab === 'profit' && (
+        {/* {tab === 'profit' && (
           <div className="card-surface rounded-xl p-4">
             <div className="text-xs text-muted-foreground uppercase tracking-wider">Today's Estimated Profit</div>
             <div className="mono-num text-3xl font-semibold text-success mt-2">₹{todayProfit.toLocaleString('en-IN')}</div>
             <div className="text-xs text-muted-foreground mt-2">Based on purchase vs selling price difference</div>
           </div>
-        )}
+        )} */}
 
         {tab === 'fast' && (
           <div className="card-surface rounded-xl">

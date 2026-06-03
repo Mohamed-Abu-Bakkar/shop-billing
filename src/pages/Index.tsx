@@ -7,8 +7,9 @@ import InventoryPage from '@/components/InventoryPage';
 import CustomersPage from '@/components/CustomersPage';
 import ReportsPage from '@/components/ReportsPage';
 import PaymentsPage from '@/components/PaymentsPage';
+import InvoicesPage from '@/components/InvoicesPage';
 
-type Page = 'dashboard' | 'billing' | 'inventory' | 'customers' | 'reports' | 'payments';
+type Page = 'dashboard' | 'billing' | 'inventory' | 'customers' | 'reports' | 'payments' | 'invoices';
 
 const Index = () => {
   const [page, setPage] = useState<Page>('dashboard');
@@ -53,6 +54,7 @@ const Index = () => {
   if (page === 'customers') return <CustomersPage {...commonProps} onBack={goHome} />;
   if (page === 'reports') return <ReportsPage {...commonProps} onBack={goHome} />;
   if (page === 'payments') return <PaymentsPage {...commonProps} onBack={goHome} />;
+  if (page === 'invoices') return <InvoicesPage {...commonProps} onBack={goHome} />;
 
   return (
     <div className="min-h-screen bg-background">
