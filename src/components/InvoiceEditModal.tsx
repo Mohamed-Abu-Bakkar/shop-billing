@@ -19,12 +19,14 @@ export default function InvoiceEditModal({ invoice, onClose, onDelete }: Invoice
   const [createdAt, setCreatedAt] = useState(invoice.createdAt.slice(0, 16));
   const [items, setItems] = useState<InvoiceItem[]>(invoice.items.map(i => ({ ...i })));
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmSave, setConfirmSave] = useState(false);
   const [search, setSearch] = useState('');
   const [isClickingItem, setIsClickingItem] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
   const allItems = (useQuery(shopApi.listItems, {}) ?? []) as Item[];
   const updateInvoice = useMutation(shopApi.updateInvoice);
+  const createInvoice = useMutation(shopApi.createInvoice);
 
   const filteredItems = allItems.filter(item =>
     item.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -72,14 +74,9 @@ export default function InvoiceEditModal({ invoice, onClose, onDelete }: Invoice
     setItems(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSave = async () => {
-    if (items.length === 0) {
-      toast.error('Add at least one item');
-      return;
-    }
-
+  const buildInvoice = () => {
     const { _creationTime, _id, ...rest } = invoice as any;
-    const updated: Invoice = {
+    return {
       ...rest,
       customerName: customerName.trim() || null,
       items,
@@ -89,13 +86,37 @@ export default function InvoiceEditModal({ invoice, onClose, onDelete }: Invoice
       paymentMethod: paymentMethod as Invoice['paymentMethod'],
       createdAt: new Date(createdAt).toISOString(),
     };
+  };
 
+  const handleResave = async () => {
+    if (items.length === 0) {
+      toast.error('Add at least one item');
+      return;
+    }
     try {
-      await updateInvoice({ invoice: updated });
+      await updateInvoice({ invoice: buildInvoice() });
       toast.success('Invoice updated');
       onClose();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to update');
+    }
+  };
+
+  const handleSaveNew = async () => {
+    if (items.length === 0) {
+      toast.error('Add at least one item');
+      return;
+    }
+    try {
+      const data = buildInvoice();
+      const created = await createInvoice({
+        invoice: { ...data, id: generateId() },
+        templateType: 'bill',
+      });
+      toast.success(`New invoice ${created.invoiceNo} created`);
+      onClose();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to create');
     }
   };
 
@@ -278,7 +299,19 @@ export default function InvoiceEditModal({ invoice, onClose, onDelete }: Invoice
           )}
           <div className="flex items-center gap-2">
             <LoadingButton onClick={onClose} className="px-4 py-2 text-sm rounded-md bg-muted text-muted-foreground hover:bg-muted/80">Cancel</LoadingButton>
-            <LoadingButton onClick={handleSave} className="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:opacity-90">Save</LoadingButton>
+            {confirmSave ? (
+              <div className="flex items-center gap-1">
+                <LoadingButton onClick={() => { setConfirmSave(false); handleResave(); }}
+                  className="px-3 py-2 text-xs rounded-md bg-primary text-primary-foreground">Update Existing</LoadingButton>
+                <LoadingButton onClick={() => { setConfirmSave(false); handleSaveNew(); }}
+                  className="px-3 py-2 text-xs rounded-md bg-accent text-accent-foreground">Save as New</LoadingButton>
+                <LoadingButton onClick={() => setConfirmSave(false)}
+                  className="px-3 py-2 text-xs rounded-md bg-muted text-muted-foreground">Cancel</LoadingButton>
+              </div>
+            ) : (
+              <LoadingButton onClick={() => setConfirmSave(true)}
+                className="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:opacity-90">Save</LoadingButton>
+            )}
           </div>
         </div>
       </div>
