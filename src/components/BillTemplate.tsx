@@ -1,16 +1,21 @@
+import { useState } from 'react';
+import { useQuery, useMutation } from 'convex/react';
 import { Invoice, Item } from '@/types';
-import { useQuery } from 'convex/react';
 import { shopApi } from '@/lib/convex';
+import { toast } from 'sonner';
 import { LoadingButton } from './ui/loading-button';
 
 interface BillTemplateProps {
   invoice: Invoice;
   onClose: () => void;
+  onDelete?: (invoice: Invoice) => void;
   type?: 'bill' | 'quotation';
 }
 
-export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTemplateProps) {
+export default function BillTemplate({ invoice, onClose, onDelete, type = 'bill' }: BillTemplateProps) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const items = (useQuery(shopApi.listItems, {}) ?? []) as Item[];
+  const deleteInvoice = useMutation(shopApi.deleteInvoice);
   const hasDiscount = invoice.items.some(item => item.discount > 0);
 
   const formatDate = (dateString: string) => {
@@ -149,6 +154,15 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
         resolve();
       }, 250);
     });
+  };
+
+  const handleDelete = async () => {
+    const result = await deleteInvoice({ id: invoice.id });
+    if (result.deleted) {
+      toast.success(`Invoice ${invoice.invoiceNo} deleted`);
+      onDelete?.(invoice);
+      onClose();
+    }
   };
 
   return (
@@ -386,12 +400,23 @@ export default function BillTemplate({ invoice, onClose, type = 'bill' }: BillTe
 
         {/* Action Buttons - Hidden in print */}
         <div className="print:hidden bg-gray-50 px-6 py-4 border-t border-gray-200 rounded-b-lg flex justify-between">
-          <LoadingButton
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
-          >
-            Close
-          </LoadingButton>
+          <div className="flex items-center gap-2">
+            <LoadingButton
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+            >
+              Close
+            </LoadingButton>
+            {confirmDelete ? (
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-red-600">Delete?</span>
+                <LoadingButton onClick={handleDelete} className="px-3 py-2 text-xs rounded bg-red-600 text-white hover:bg-red-700">Confirm</LoadingButton>
+                <LoadingButton onClick={() => setConfirmDelete(false)} className="px-3 py-2 text-xs rounded bg-gray-300 text-gray-700">No</LoadingButton>
+              </div>
+            ) : (
+              <LoadingButton onClick={() => setConfirmDelete(true)} className="px-3 py-2 text-xs rounded bg-red-100 text-red-700 hover:bg-red-200 transition-colors">Delete</LoadingButton>
+            )}
+          </div>
           <div className="space-x-2">
             <LoadingButton
               onClick={handlePrint}
