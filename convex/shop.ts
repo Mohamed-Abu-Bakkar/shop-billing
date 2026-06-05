@@ -1,5 +1,5 @@
 import { mutation, query } from "./_generated/server";
-import type { MutationCtx } from "./_generated/server";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { seedClients, seedCustomers, seedInvoices, seedItems, seedPayments } from "./seedData";
 
@@ -81,7 +81,7 @@ async function getCustomerById(ctx: MutationCtx, customerId: string) {
   return await ctx.db.query("customers").withIndex("by_app_id", (q) => q.eq("id", customerId)).unique();
 }
 
-async function getInvoiceById(ctx: MutationCtx, id: string) {
+async function getInvoiceById(ctx: { db: MutationCtx["db"] | QueryCtx["db"] }, id: string) {
   return await ctx.db.query("invoices").withIndex("by_app_id", (q) => q.eq("id", id)).unique();
 }
 
@@ -226,6 +226,99 @@ export const listInvoices = query({
   handler: async (ctx) => {
     const invoices = await ctx.db.query("invoices").collect();
     return invoices.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  },
+});
+
+export const getInvoice = query({
+  args: { id: v.string() },
+  handler: async (ctx, { id }) => {
+    return await getInvoiceById(ctx, id);
+  },
+});
+
+export const updateInvoice = mutation({
+  args: { invoice: invoiceValidator },
+  handler: async (ctx, { invoice }) => {
+    const existing = await getInvoiceById(ctx, invoice.id);
+    if (!existing) {
+      throw new Error("Invoice not found");
+    }
+
+    // Revert old stock, apply new stock
+    for (const oldItem of existing.items) {
+      const itemDoc = await getItemById(ctx, oldItem.itemId);
+      if (itemDoc) {
+        await ctx.db.patch(itemDoc._id, { stock: itemDoc.stock + oldItem.qty });
+      }
+    }
+    for (const newItem of invoice.items) {
+      const itemDoc = await getItemById(ctx, newItem.itemId);
+      if (itemDoc) {
+        await ctx.db.patch(itemDoc._id, {
+          stock: Math.max(0, itemDoc.stock - newItem.qty),
+          lastSoldAt: invoice.createdAt,
+        });
+      }
+    }
+
+    // Update customer credit if customer or amounts changed
+    const oldUnpaid = existing.totalAmount - existing.paidAmount;
+    const newUnpaid = invoice.totalAmount - invoice.paidAmount;
+    const diff = newUnpaid - oldUnpaid;
+
+    if (diff !== 0 && invoice.customerId) {
+      const customer = await getCustomerById(ctx, invoice.customerId);
+      if (customer) {
+        await ctx.db.patch(customer._id, {
+          totalCredit: Math.max(0, customer.totalCredit + diff),
+        });
+      }
+    }
+
+    // If customer changed, remove old credit from previous customer
+    if (invoice.customerId !== existing.customerId && oldUnpaid > 0 && existing.customerId) {
+      const oldCustomer = await getCustomerById(ctx, existing.customerId);
+      if (oldCustomer) {
+        await ctx.db.patch(oldCustomer._id, {
+          totalCredit: Math.max(0, oldCustomer.totalCredit - oldUnpaid),
+        });
+      }
+    }
+
+    await ctx.db.patch(existing._id, invoice);
+    return invoice;
+  },
+});
+
+export const deleteInvoice = mutation({
+  args: { id: v.string() },
+  handler: async (ctx, { id }) => {
+    const existing = await getInvoiceById(ctx, id);
+    if (!existing) {
+      return { deleted: false };
+    }
+
+    // Revert stock
+    for (const item of existing.items) {
+      const itemDoc = await getItemById(ctx, item.itemId);
+      if (itemDoc) {
+        await ctx.db.patch(itemDoc._id, { stock: itemDoc.stock + item.qty });
+      }
+    }
+
+    // Remove unpaid credit from customer
+    const unpaid = existing.totalAmount - existing.paidAmount;
+    if (unpaid > 0 && existing.customerId) {
+      const customer = await getCustomerById(ctx, existing.customerId);
+      if (customer) {
+        await ctx.db.patch(customer._id, {
+          totalCredit: Math.max(0, customer.totalCredit - unpaid),
+        });
+      }
+    }
+
+    await ctx.db.delete(existing._id);
+    return { deleted: true };
   },
 });
 
