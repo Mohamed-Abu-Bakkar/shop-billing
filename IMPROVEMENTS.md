@@ -17,9 +17,10 @@ The following improvements were identified from a full codebase exploration. The
 - `createInvoice` (convex/shop.ts:397) subtracts stock without clamping: `stock: itemDoc.stock - billItem.qty`. `updateInvoice` does clamp (line 258), but `createInvoice` does not.
 - Fix: clamp stock at `>= 0` and add validation to block overselling.
 
-### 4. Customer credit transfer bug
-- `updateInvoice` (convex/shop.ts:278-286): when the old and new customer's unpaid amounts are equal, the new customer never gets credit recorded (new credit is only applied in the `diff !== 0` branch).
-- Fix: always reconcile the new customer's credit explicitly.
+### 4. Customer credit transfer bug — ✅ DONE
+- `updateInvoice` (convex/shop.ts): when an invoice was reassigned to a different customer with an *unchanged* unpaid amount (`diff === 0`), the new customer's credit was never incremented (new credit was only applied in the `diff !== 0` branch). The old customer lost the credit, so the receivable was silently dropped from the books.
+- Fixed: on customer change the new customer is now credited the full new unpaid amount (and the old customer debited the old unpaid), regardless of whether the amount changed.
+- Also added a **customer picker** to `InvoiceEditModal.tsx` (search + select from the customer list, or keep a walk-in/custom name, or link/unlink a customer with a chip + ✕). This makes the reassignment actually reachable from the UI — previously the modal only edited the customer *name* text and kept the original `customerId`.
 
 ### 5. Hard-coded / mistyped business info — ✅ DONE
 - `src/components/BillTemplate.tsx:179` had the store name misspelled as "Sri Mahaligam Electricals" and hard-coded GSTIN, phone, email, and 30-day credit terms.

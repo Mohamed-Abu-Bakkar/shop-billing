@@ -261,22 +261,26 @@ export const updateInvoice = mutation({
       }
     }
 
-    // Update customer credit if customer or amounts changed
+    // Update customer credit
     const oldUnpaid = existing.totalAmount - existing.paidAmount;
     const newUnpaid = invoice.totalAmount - invoice.paidAmount;
-    const diff = newUnpaid - oldUnpaid;
+    const sameCustomer = invoice.customerId === existing.customerId;
 
-    if (diff !== 0 && invoice.customerId) {
+    // New (or same) customer's credit:
+    //   - same customer: adjust by the change in unpaid amount
+    //   - different customer: take on the full new unpaid amount
+    if (invoice.customerId) {
       const customer = await getCustomerById(ctx, invoice.customerId);
       if (customer) {
+        const creditChange = sameCustomer ? newUnpaid - oldUnpaid : newUnpaid;
         await ctx.db.patch(customer._id, {
-          totalCredit: Math.max(0, customer.totalCredit + diff),
+          totalCredit: Math.max(0, customer.totalCredit + creditChange),
         });
       }
     }
 
-    // If customer changed, remove old credit from previous customer
-    if (invoice.customerId !== existing.customerId && oldUnpaid > 0 && existing.customerId) {
+    // If customer changed, remove the old unpaid from the previous customer
+    if (!sameCustomer && oldUnpaid > 0 && existing.customerId) {
       const oldCustomer = await getCustomerById(ctx, existing.customerId);
       if (oldCustomer) {
         await ctx.db.patch(oldCustomer._id, {

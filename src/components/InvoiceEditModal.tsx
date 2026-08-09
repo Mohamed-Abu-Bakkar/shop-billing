@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useQuery, useMutation } from 'convex/react';
-import { Invoice, InvoiceItem, Item } from '@/types';
+import { Customer, Invoice, InvoiceItem, Item } from '@/types';
 import { shopApi } from '@/lib/convex';
 import { toast } from 'sonner';
 import { LoadingButton } from './ui/loading-button';
@@ -14,6 +14,8 @@ interface InvoiceEditModalProps {
 
 export default function InvoiceEditModal({ invoice, onClose, onDelete }: InvoiceEditModalProps) {
   const [customerName, setCustomerName] = useState(invoice.customerName ?? '');
+  const [customerId, setCustomerId] = useState<string | null>(invoice.customerId);
+  const [customerSearch, setCustomerSearch] = useState('');
   const [paidAmount, setPaidAmount] = useState(String(invoice.paidAmount));
   const [paymentMethod, setPaymentMethod] = useState(invoice.paymentMethod);
   const [createdAt, setCreatedAt] = useState(invoice.createdAt.slice(0, 16));
@@ -25,6 +27,7 @@ export default function InvoiceEditModal({ invoice, onClose, onDelete }: Invoice
   const searchRef = useRef<HTMLInputElement>(null);
 
   const allItems = (useQuery(shopApi.listItems, {}) ?? []) as Item[];
+  const customers = (useQuery(shopApi.listCustomers, {}) ?? []) as Customer[];
   const updateInvoice = useMutation(shopApi.updateInvoice);
   const createInvoice = useMutation(shopApi.createInvoice);
 
@@ -32,6 +35,24 @@ export default function InvoiceEditModal({ invoice, onClose, onDelete }: Invoice
     item.name.toLowerCase().includes(search.toLowerCase()) ||
     item.brand.toLowerCase().includes(search.toLowerCase())
   ).slice(0, 20);
+
+  const selectedCustomer = customers.find(c => c.id === customerId) ?? null;
+  const filteredCustomers = customers.filter(c =>
+    c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+    c.phone.includes(customerSearch)
+  ).slice(0, 10);
+
+  const pickCustomer = (customer: Customer) => {
+    setCustomerId(customer.id);
+    setCustomerName(customer.name);
+    setCustomerSearch('');
+  };
+
+  const clearCustomer = () => {
+    setCustomerId(null);
+    setCustomerName('');
+    setCustomerSearch('');
+  };
 
   const totalAmount = items.reduce((s, i) => s + i.price * i.qty * (1 - i.discount / 100), 0);
   const paid = parseFloat(paidAmount) || 0;
@@ -78,6 +99,7 @@ export default function InvoiceEditModal({ invoice, onClose, onDelete }: Invoice
     const { _creationTime, _id, ...rest } = invoice as any;
     return {
       ...rest,
+      customerId,
       customerName: customerName.trim() || null,
       items,
       totalAmount,
@@ -141,13 +163,50 @@ export default function InvoiceEditModal({ invoice, onClose, onDelete }: Invoice
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Customer</label>
-              <input
-                type="text"
-                value={customerName}
-                onChange={e => setCustomerName(e.target.value)}
-                className="w-full mt-1 px-3 py-2 text-sm rounded-md bg-muted border border-border focus:outline-none focus:ring-1 focus:ring-primary"
-                placeholder="Walk-in"
-              />
+              {selectedCustomer ? (
+                <div className="mt-1 px-3 py-2 text-sm rounded-md bg-muted border border-border flex items-center justify-between">
+                  <div className="truncate">
+                    <span className="font-medium">{selectedCustomer.name}</span>
+                    <span className="text-muted-foreground text-xs ml-2">{selectedCustomer.phone}</span>
+                  </div>
+                  <button type="button" onClick={clearCustomer}
+                    className="text-sm text-muted-foreground hover:text-danger shrink-0 ml-2" title="Remove customer">
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <input
+                    type="text"
+                    value={customerName}
+                    onChange={e => setCustomerName(e.target.value)}
+                    className="w-full mt-1 px-3 py-2 text-sm rounded-md bg-muted border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                    placeholder="Walk-in / custom name"
+                  />
+                  <input
+                    type="text"
+                    value={customerSearch}
+                    onChange={e => setCustomerSearch(e.target.value)}
+                    className="w-full mt-1 px-3 py-2 text-sm rounded-md bg-muted border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                    placeholder="Search & link customer..."
+                  />
+                  {customerSearch && (
+                    <div className="mt-1 max-h-40 overflow-y-auto divide-y divide-border border border-border rounded-md bg-card">
+                      {filteredCustomers.length === 0 ? (
+                        <div className="p-2 text-xs text-muted-foreground text-center">No matching customer</div>
+                      ) : (
+                        filteredCustomers.map(c => (
+                          <button key={c.id} type="button" onClick={() => pickCustomer(c)}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex justify-between items-center gap-2">
+                            <span className="font-medium truncate">{c.name}</span>
+                            <span className="text-xs text-muted-foreground shrink-0">{c.phone}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Date & Time</label>
