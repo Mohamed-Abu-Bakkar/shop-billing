@@ -54,10 +54,9 @@ The following improvements were identified from a full codebase exploration. The
 - 578-line component does search, customer/client management, line items, and payments all in one file.
 - Fix: memoize with a stable handler and consider splitting into smaller components.
 
-### 11. `generateId()` collision risk
-- `src/lib/id.ts` uses `Math.random().toString(36).slice(2,10) + Date.now().toString(36)`.
-- Collisions silently overwrite DB rows (docs keyed/selected by the `by_app_id` index).
-- Fix: use a cryptographically strong ID or let Convex own the primary key.
+### 11. `generateId()` collision risk — ✅ DONE
+- `src/lib/id.ts` used `Math.random().toString(36).slice(2,10) + Date.now().toString(36)` — collisions would silently corrupt/quash records (multiple docs with the same app `id`, or `getXById(...).unique()` throwing).
+- Fixed: `generateId()` now uses `crypto.randomUUID()` (v4, cryptographically strong, non-colliding in practice), with a `Date.now()` + two-independent-random-segment fallback for environments without `crypto.randomUUID`.
 
 ### 12. PWA broken assets
 - `vite.config.ts` references `pwa-192x192.png`, `pwa-512x512.png`, `apple-touch-icon.png`; `index.html` links `/apple-touch-icon.png` and `/manifest.webmanifest` — none exist in `public/`.
