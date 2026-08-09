@@ -40,9 +40,10 @@ The following improvements were identified from a full codebase exploration. The
 - Commented-out blocks: `Dashboard.tsx` (36:21-26, 65:73-77, 48:50-53), `ReportsPage.tsx` (22-27, 82-86), `BillTemplate.tsx` "Print to PDF" block (427-466), `BillingScreen.tsx` (64-66).
 - Fix: remove or restore deliberately.
 
-### 8. Hand-written `src/lib/convex.ts` is unnecessary
-- The `ShopApi` type + `makeFunctionReference` wrappers duplicate what Convex's generated `convex/_generated/api.d.ts` already provides.
-- Fix: use the generated `api` from the Convex client directly.
+### 8. Hand-written `src/lib/convex.ts` is unnecessary — ✅ DONE
+- The `ShopApi` type + `makeFunctionReference` wrappers duplicated what Convex's generated `convex/_generated/api` already provides.
+- Fixed: deleted `src/lib/convex.ts` and replaced every `shopApi.*` usage with `api.shop.*` from `@convex/_generated/api`. Added `@convex/*` → `./convex/*` aliases in `vite.config.ts` and `tsconfig.app.json`. Query results now use Convex's generated document types (with `_id`/`_creationTime`).
+- Note: because the app's hand-written types use literal unions (`category`, `type`) but the schema declares `v.string()`, `Index.tsx` casts the four queries back to the hand types, matching the pattern already used across the other components. See item 9 for the deeper fix.
 
 ### 9. Duplicated types
 - `src/types/index.ts` mirrors `convex/schema.ts` by hand; risk of drift. Some code even references `_id`/`_createTime` that the hand-written types don't define (see `CustomersPage.tsx:34`, `InventoryPage.tsx:38`).

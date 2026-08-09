@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { Item, Category, Unit } from '@/types';
 import { generateId } from '@/lib/id';
-import { shopApi } from '@/lib/convex';
+import { api } from '@convex/_generated/api';
 import { toast } from 'sonner';
 import { LoadingButton } from './ui/loading-button';
 import { Pencil, Trash2 } from 'lucide-react';
@@ -19,10 +19,10 @@ export default function InventoryPage({ onBack }: InventoryPageProps) {
   const [showForm, setShowForm] = useState(false);
   const [editItem, setEditItem] = useState<Item | null>(null);
   const [filter, setFilter] = useState<'all' | 'low' | 'dead'>('all');
-  const items = (useQuery(shopApi.listItems, {}) ?? []) as Item[];
-  const createItem = useMutation(shopApi.createItem);
-  const saveItem = useMutation(shopApi.updateItem);
-  const removeItem = useMutation(shopApi.deleteItem);
+  const items = (useQuery(api.shop.listItems, {}) ?? []) as Item[];
+  const createItem = useMutation(api.shop.createItem);
+  const saveItem = useMutation(api.shop.updateItem);
+  const removeItem = useMutation(api.shop.deleteItem);
 
   const filtered = items.filter(i => {
     const matchSearch = i.name.toLowerCase().includes(search.toLowerCase()) || i.brand.toLowerCase().includes(search.toLowerCase());

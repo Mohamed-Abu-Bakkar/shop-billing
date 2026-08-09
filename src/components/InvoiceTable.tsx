@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useMutation } from 'convex/react';
 import { Invoice } from '@/types';
-import { shopApi } from '@/lib/convex';
+import { api } from '@convex/_generated/api';
 import { toast } from 'sonner';
 import InvoiceEditModal from './InvoiceEditModal';
 
@@ -23,7 +23,7 @@ export default function InvoiceTable({ invoices, onSelect }: InvoiceTableProps) 
   const [editInvoice, setEditInvoice] = useState<Invoice | null>(null);
   const [deleteConfirmInvoice, setDeleteConfirmInvoice] = useState<Invoice | null>(null);
 
-  const deleteInvoice = useMutation(shopApi.deleteInvoice);
+  const deleteInvoice = useMutation(api.shop.deleteInvoice);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {

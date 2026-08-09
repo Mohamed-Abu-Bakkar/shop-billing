@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { Customer, Invoice, Payment } from '@/types';
 import { generateId } from '@/lib/id';
-import { shopApi } from '@/lib/convex';
+import { api } from '@convex/_generated/api';
 import { toast } from 'sonner';
 import { X } from 'lucide-react';
 import { LoadingButton } from './ui/loading-button';
@@ -14,10 +14,10 @@ interface PaymentsPageProps {
 export default function PaymentsPage({ onBack }: PaymentsPageProps) {
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState('');
-  const customers = (useQuery(shopApi.listCustomers, {}) ?? []) as Customer[];
-  const payments = (useQuery(shopApi.listPayments, {}) ?? []) as Payment[];
-  const invoices = (useQuery(shopApi.listInvoices, {}) ?? []) as Invoice[];
-  const applyCustomerPayment = useMutation(shopApi.applyCustomerPayment);
+  const customers = (useQuery(api.shop.listCustomers, {}) ?? []) as Customer[];
+  const payments = (useQuery(api.shop.listPayments, {}) ?? []) as Payment[];
+  const invoices = (useQuery(api.shop.listInvoices, {}) ?? []) as Invoice[];
+  const applyCustomerPayment = useMutation(api.shop.applyCustomerPayment);
 
   const filtered = payments.filter((p) =>
     p.customerName.toLowerCase().includes(search.toLowerCase()),

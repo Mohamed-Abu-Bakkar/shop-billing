@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { BehaviorScore, Client, Customer, Invoice } from '@/types';
 import { generateId } from '@/lib/id';
-import { shopApi } from '@/lib/convex';
+import { api } from '@convex/_generated/api';
 import { toast } from 'sonner';
 import { Pencil, Trash2, Eye } from 'lucide-react';
 import { LoadingButton } from './ui/loading-button';
@@ -12,11 +12,11 @@ interface CustomersPageProps {
 }
 
 export default function CustomersPage({ onBack }: CustomersPageProps) {
-  const customers = (useQuery(shopApi.listCustomers, {}) ?? []) as Customer[];
-  const invoices = (useQuery(shopApi.listInvoices, {}) ?? []) as Invoice[];
-  const createCustomer = useMutation(shopApi.createCustomer);
-  const saveCustomer = useMutation(shopApi.updateCustomer);
-  const deleteCustomer = useMutation(shopApi.deleteCustomer);
+  const customers = (useQuery(api.shop.listCustomers, {}) ?? []) as Customer[];
+  const invoices = (useQuery(api.shop.listInvoices, {}) ?? []) as Invoice[];
+  const createCustomer = useMutation(api.shop.createCustomer);
+  const saveCustomer = useMutation(api.shop.updateCustomer);
+  const deleteCustomer = useMutation(api.shop.deleteCustomer);
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editCust, setEditCust] = useState<Customer | null>(null);
@@ -235,10 +235,10 @@ function TransactionHistory({ invoices }: { invoices: Invoice[] }) {
 }
 
 function ClientManager({ customerId }: { customerId: string }) {
-  const clients = (useQuery(shopApi.listClientsByCustomer, { customerId }) ?? []) as Client[];
-  const createClient = useMutation(shopApi.createClient);
-  const updateClient = useMutation(shopApi.updateClient);
-  const removeClient = useMutation(shopApi.deleteClient);
+  const clients = (useQuery(api.shop.listClientsByCustomer, { customerId }) ?? []) as Client[];
+  const createClient = useMutation(api.shop.createClient);
+  const updateClient = useMutation(api.shop.updateClient);
+  const removeClient = useMutation(api.shop.deleteClient);
   const [showAdd, setShowAdd] = useState(false);
   const [editClient, setEditClient] = useState<Client | null>(null);
   const [name, setName] = useState('');
@@ -359,7 +359,7 @@ function ClientManager({ customerId }: { customerId: string }) {
 }
 
 function CreditPayment({ customer, unpaidInvoices }: { customer: Customer; unpaidInvoices: Invoice[] }) {
-  const applyCustomerPayment = useMutation(shopApi.applyCustomerPayment);
+  const applyCustomerPayment = useMutation(api.shop.applyCustomerPayment);
   const [selectedInvId, setSelectedInvId] = useState<string | null>(null);
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState<'Cash' | 'UPI' | 'Mixed'>('Cash');

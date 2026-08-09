@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from 'convex/react';
 import { Invoice, Item } from '@/types';
-import { shopApi } from '@/lib/convex';
+import { api } from '@convex/_generated/api';
 import BillTemplate from './BillTemplate';
 import InvoiceTable from './InvoiceTable';
 import { LoadingButton } from './ui/loading-button';
@@ -13,8 +13,8 @@ interface ReportsPageProps {
 export default function ReportsPage({ onBack }: ReportsPageProps) {
   const [tab, setTab] = useState<'overview' | 'credit' | 'fast' | 'dead'>('overview');
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
-  const invoices = (useQuery(shopApi.listInvoices, {}) ?? []) as Invoice[];
-  const items = (useQuery(shopApi.listItems, {}) ?? []) as Item[];
+  const invoices = (useQuery(api.shop.listInvoices, {}) ?? []) as Invoice[];
+  const items = (useQuery(api.shop.listItems, {}) ?? []) as Item[];
 
   // Overall metrics
   const totalSales = invoices.reduce((s, i) => s + i.totalAmount, 0);

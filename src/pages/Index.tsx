@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from 'convex/react';
-import { shopApi } from '@/lib/convex';
+import { api } from '@convex/_generated/api';
 import { store } from '@/lib/store';
+import type { Customer, Invoice, Item, Payment } from '@/types';
 import Dashboard from '@/components/Dashboard';
 import BillingScreen from '@/components/BillingScreen';
 import InventoryPage from '@/components/InventoryPage';
@@ -16,10 +17,10 @@ const Index = () => {
   const [page, setPage] = useState<Page>('dashboard');
 
   // Fetch all data once to avoid refetching on navigation
-  const invoices = useQuery(shopApi.listInvoices, {});
-  const customers = useQuery(shopApi.listCustomers, {});
-  const items = useQuery(shopApi.listItems, {});
-  const payments = useQuery(shopApi.listPayments, {});
+  const invoices = useQuery(api.shop.listInvoices, {}) as Invoice[] | undefined;
+  const customers = useQuery(api.shop.listCustomers, {}) as Customer[] | undefined;
+  const items = useQuery(api.shop.listItems, {}) as Item[] | undefined;
+  const payments = useQuery(api.shop.listPayments, {}) as Payment[] | undefined;
 
   const customerCount = customers?.length ?? 0;
   const itemCount = items?.length ?? 0;

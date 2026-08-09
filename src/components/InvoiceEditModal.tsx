@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { Customer, Invoice, InvoiceItem, Item } from '@/types';
-import { shopApi } from '@/lib/convex';
+import { api } from '@convex/_generated/api';
 import { toast } from 'sonner';
 import { LoadingButton } from './ui/loading-button';
 import { generateId } from '@/lib/id';
@@ -26,10 +26,10 @@ export default function InvoiceEditModal({ invoice, onClose, onDelete }: Invoice
   const [isClickingItem, setIsClickingItem] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
-  const allItems = (useQuery(shopApi.listItems, {}) ?? []) as Item[];
-  const customers = (useQuery(shopApi.listCustomers, {}) ?? []) as Customer[];
-  const updateInvoice = useMutation(shopApi.updateInvoice);
-  const createInvoice = useMutation(shopApi.createInvoice);
+  const allItems = (useQuery(api.shop.listItems, {}) ?? []) as Item[];
+  const customers = (useQuery(api.shop.listCustomers, {}) ?? []) as Customer[];
+  const updateInvoice = useMutation(api.shop.updateInvoice);
+  const createInvoice = useMutation(api.shop.createInvoice);
 
   const filteredItems = allItems.filter(item =>
     item.name.toLowerCase().includes(search.toLowerCase()) ||

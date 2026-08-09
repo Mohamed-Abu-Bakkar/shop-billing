@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { Client, Customer, Invoice, InvoiceItem, Item, PaymentMethod } from '@/types';
 import { generateId } from '@/lib/id';
-import { shopApi } from '@/lib/convex';
+import { api } from '@convex/_generated/api';
 import { toast } from 'sonner';
 import BillTemplate from './BillTemplate';
 import { LoadingButton } from './ui/loading-button';
@@ -44,12 +44,12 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
 
   const selectedCustomer = customers.find((customer) => customer.id === selectedCustomerId) ?? null;
   const clients = (useQuery(
-    shopApi.listClientsByCustomer,
+    api.shop.listClientsByCustomer,
     selectedCustomer?.isElectrician ? { customerId: selectedCustomer.id } : 'skip',
   ) ?? []) as Client[];
-  const createCustomer = useMutation(shopApi.createCustomer);
-  const createClient = useMutation(shopApi.createClient);
-  const createInvoice = useMutation(shopApi.createInvoice);
+  const createCustomer = useMutation(api.shop.createCustomer);
+  const createClient = useMutation(api.shop.createClient);
+  const createInvoice = useMutation(api.shop.createInvoice);
 
   useEffect(() => {
     searchRef.current?.focus();

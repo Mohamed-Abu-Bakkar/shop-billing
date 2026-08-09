@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { Invoice, Item } from '@/types';
-import { shopApi } from '@/lib/convex';
+import { api } from '@convex/_generated/api';
 import { store } from '@/lib/store';
 import { toast } from 'sonner';
 import { LoadingButton } from './ui/loading-button';
@@ -15,8 +15,8 @@ interface BillTemplateProps {
 
 export default function BillTemplate({ invoice, onClose, onDelete, type = 'bill' }: BillTemplateProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const items = (useQuery(shopApi.listItems, {}) ?? []) as Item[];
-  const deleteInvoice = useMutation(shopApi.deleteInvoice);
+  const items = (useQuery(api.shop.listItems, {}) ?? []) as Item[];
+  const deleteInvoice = useMutation(api.shop.deleteInvoice);
   const hasDiscount = invoice.items.some(item => item.discount > 0);
 
   const formatDate = (dateString: string) => {
