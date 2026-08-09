@@ -506,18 +506,10 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
                       />
                       <LoadingButton onClick={() => updateQty(billItem.itemId, 1)} className="w-6 h-6 rounded bg-muted text-foreground text-xs flex items-center justify-center hover:bg-secondary">+</LoadingButton>
                       <span className="text-muted-foreground text-xs mx-1">×</span>
-                      {mode === 'Wholesale' ? (
-                        <input type="number" value={billItem.price} onChange={(event) => updatePrice(billItem.itemId, parseFloat(event.target.value) || 0)} className="mono-num w-20 px-2 py-1 text-xs rounded bg-muted border border-input" />
-                      ) : (
-                        <span className="mono-num text-xs">₹{billItem.price.toLocaleString('en-IN')}</span>
-                      )}
-                      {mode === 'Wholesale' && (
-                        <>
-                          <span className="text-muted-foreground text-xs">-</span>
-                          <input type="number" value={billItem.discount} onChange={(event) => updateDiscount(billItem.itemId, parseFloat(event.target.value) || 0)} className="mono-num w-12 px-2 py-1 text-xs rounded bg-muted border border-input" placeholder="%" />
-                          <span className="text-muted-foreground text-xs">%</span>
-                        </>
-                      )}
+                      <input type="number" value={billItem.price} onChange={(event) => updatePrice(billItem.itemId, parseFloat(event.target.value) || 0)} className="mono-num w-20 px-2 py-1 text-xs rounded bg-muted border border-input" />
+                      <span className="text-muted-foreground text-xs">-</span>
+                      <input type="number" value={billItem.discount} onChange={(event) => updateDiscount(billItem.itemId, parseFloat(event.target.value) || 0)} className="mono-num w-12 px-2 py-1 text-xs rounded bg-muted border border-input" placeholder="%" />
+                      <span className="text-muted-foreground text-xs">%</span>
                       <span className="mono-num font-semibold text-xs ml-auto">
                         ₹{(billItem.price * billItem.qty * (1 - billItem.discount / 100)).toLocaleString('en-IN')}
                       </span>
