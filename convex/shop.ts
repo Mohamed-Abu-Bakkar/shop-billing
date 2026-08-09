@@ -432,11 +432,36 @@ export const applyCustomerPayment = mutation({
       if (!invoice) {
         throw new Error("Invoice not found");
       }
+      if (invoice.customerId !== payment.customerId) {
+        throw new Error("Invoice does not belong to this customer");
+      }
       const newPaidAmount = Math.min(invoice.totalAmount, invoice.paidAmount + payment.amount);
       await ctx.db.patch(invoice._id, {
         paidAmount: newPaidAmount,
         status: newPaidAmount >= invoice.totalAmount ? "Paid" : "Partial",
       });
+    } else {
+      // General payment: settle the customer's outstanding invoices, oldest first.
+      const invoices = await ctx.db.query("invoices").collect();
+      const outstanding = invoices
+        .filter(
+          (invoice) =>
+            invoice.customerId === payment.customerId && invoice.paidAmount < invoice.totalAmount,
+        )
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+      let remaining = payment.amount;
+      for (const invoice of outstanding) {
+        if (remaining <= 0) break;
+        const due = invoice.totalAmount - invoice.paidAmount;
+        const credit = Math.min(due, remaining);
+        const newPaid = invoice.paidAmount + credit;
+        await ctx.db.patch(invoice._id, {
+          paidAmount: newPaid,
+          status: newPaid >= invoice.totalAmount ? "Paid" : "Partial",
+        });
+        remaining -= credit;
+      }
     }
 
     await ctx.db.insert("payments", payment);
