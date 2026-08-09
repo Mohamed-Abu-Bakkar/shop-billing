@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from 'convex/react';
 import { shopApi } from '@/lib/convex';
+import { store } from '@/lib/store';
 import Dashboard from '@/components/Dashboard';
 import BillingScreen from '@/components/BillingScreen';
 import InventoryPage from '@/components/InventoryPage';
@@ -59,8 +60,8 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card px-4 py-3 flex items-center justify-between">
-        <h1 className="heading text-lg tracking-tight">Sri Mahalingam Electricals</h1>
-        <span className="text-xs text-muted-foreground">Electrical & Plumbing Store</span>
+        <h1 className="heading text-lg tracking-tight">{store.name}</h1>
+        <span className="text-xs text-muted-foreground">{store.tagline}</span>
       </header>
       <Dashboard invoices={invoices} items={items} customerCount={customerCount} itemCount={itemCount} onNavigate={(p) => setPage(p as Page)} />
     </div>

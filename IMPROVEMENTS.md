@@ -9,7 +9,7 @@ The following improvements were identified from a full codebase exploration. The
 - Fixed: added a `+ Record Payment` button, plus Total Received / Payments summary cards, invoice-number badges on payment rows, and an improved form (close button, customer search w/ phone + outstanding, auto-filled amount, method + date pickers, Back/change customer).
 - Also fixed the backend (`convex/shop.ts` `applyCustomerPayment`): a general payment (no `invoiceId`) now settles the customer's outstanding invoices oldest-first (updates `paidAmount`/`status`) instead of only decrementing customer credit, and verifies an invoice-bound payment belongs to that customer.
 
-### 2. Quotations are lost
+### 2. Quotations are lost - least priority
 - `convex/shop.ts:378` only persists invoices when `templateType === "bill"`. Quotations are returned to the caller, previewed in the modal, then vanish — they must be re-created every time.
 - Fix: persist quotations (with their own number series, e.g. `QUOTATION-XXXX`) or explicitly treat them as ephemeral (and communicate that in the UI). Note: the current random 4-digit quotation number is collision-prone.
 
@@ -21,9 +21,9 @@ The following improvements were identified from a full codebase exploration. The
 - `updateInvoice` (convex/shop.ts:278-286): when the old and new customer's unpaid amounts are equal, the new customer never gets credit recorded (new credit is only applied in the `diff !== 0` branch).
 - Fix: always reconcile the new customer's credit explicitly.
 
-### 5. Hard-coded / mistyped business info
-- `src/components/BillTemplate.tsx:179` has the store name misspelled as "Mahaligam" and hard-codes GSTIN, phone, email, and 30-day credit terms.
-- Fix: move business info into a config/settings source and reference it everywhere.
+### 5. Hard-coded / mistyped business info — ✅ DONE
+- `src/components/BillTemplate.tsx:179` had the store name misspelled as "Sri Mahaligam Electricals" and hard-coded GSTIN, phone, email, and 30-day credit terms.
+- Fixed: created `src/lib/store.ts` as the single source of truth (name, tagline, GSTIN, phone, email, `creditTermsDays`). `BillTemplate.tsx` now renders from it (corrects the typo, dynamic GSTIN/phone/email, and credit terms), and `Index.tsx` header also uses it. The PWA manifest in `vite.config.ts` already matched the corrected name.
 
 ## Cleanup & tech debt
 

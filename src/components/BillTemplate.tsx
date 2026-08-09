@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { Invoice, Item } from '@/types';
 import { shopApi } from '@/lib/convex';
+import { store } from '@/lib/store';
 import { toast } from 'sonner';
 import { LoadingButton } from './ui/loading-button';
 
@@ -176,7 +177,7 @@ export default function BillTemplate({ invoice, onClose, onDelete, type = 'bill'
               {type === 'bill' && (
                 // make the below container centered vertically with the invoice details on the right
                 <div className="flex flex-col justify-center ">
-                  <h1 className="text-3xl font-bold text-primary mb-2">Sri Mahaligam Electricals</h1>
+                  <h1 className="text-3xl font-bold text-primary mb-2">{store.name}</h1>
                   
                 </div>
               )}
@@ -189,9 +190,9 @@ export default function BillTemplate({ invoice, onClose, onDelete, type = 'bill'
               <div className="flex justify-between">
                 <div>
                   {/* <p className="text-lg text-gray-600 mb-1">Plumbing Store</p> */}
-                  <p className="text-sm text-gray-500">GSTIN: 33ADWPJ5940P1ZR</p>
-                  <p className="text-sm text-gray-500">Phone: 99421 94751</p>
-                  <p className="text-sm text-gray-500">Email: jaimaha772@gmail.com</p>
+                  <p className="text-sm text-gray-500">GSTIN: {store.gstin}</p>
+                  <p className="text-sm text-gray-500">Phone: {store.phone}</p>
+                  <p className="text-sm text-gray-500">Email: {store.email}</p>
                 </div>
                 <div className="">
                  
@@ -370,7 +371,7 @@ export default function BillTemplate({ invoice, onClose, onDelete, type = 'bill'
                     <>
                       <li>• Goods once sold will not be taken back</li>
                       <li>• Warranty as per manufacturer terms</li>
-                      <li>• Payment due within 30 days for credit customers</li>
+                      <li>• Payment due within {store.creditTermsDays} days for credit customers</li>
                       {/* <li>• Subject to local jurisdiction</li> */}
                     </>
                   ) : (
