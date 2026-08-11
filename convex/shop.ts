@@ -89,18 +89,24 @@ async function getClientById(ctx: MutationCtx, id: string) {
   return await ctx.db.query("clients").withIndex("by_app_id", (q) => q.eq("id", id)).unique();
 }
 
-async function getInvoiceCounterDoc(ctx: MutationCtx) {
-  return await ctx.db.query("meta").withIndex("by_key", (q) => q.eq("key", "invoiceCounter")).unique();
-}
-
 async function nextInvoiceNumber(ctx: MutationCtx) {
-  const counter = await getInvoiceCounterDoc(ctx);
-  const nextValue = (counter?.value ?? 0) + 1;
-  if (counter) {
-    await ctx.db.patch(counter._id, { value: nextValue });
+  // The shared counter doc is the serialization point: concurrent saves
+  // read-modify-write it inside this transaction and Convex retries on
+  // conflict, so invoice numbers never repeat.
+  const counter = await ctx.db
+    .query("meta")
+    .withIndex("by_key", (q) => q.eq("key", "invoiceCounter"))
+    .take(1);
+
+  const base = counter[0]?.value ?? (await ctx.db.query("invoices").collect()).length;
+  const nextValue = base + 1;
+
+  if (counter[0]) {
+    await ctx.db.patch(counter[0]._id, { value: nextValue });
   } else {
     await ctx.db.insert("meta", { key: "invoiceCounter", value: nextValue });
   }
+
   return `INV-${String(nextValue).padStart(4, "0")}`;
 }
 

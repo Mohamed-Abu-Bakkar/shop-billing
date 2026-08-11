@@ -67,9 +67,9 @@ The following improvements were identified from a full codebase exploration. The
 ### 13. No authentication
 - All Convex functions are `public`. A billing / store app should protect data with `requireIdentity` and proper ownership checks.
 
-### 14. Non-atomic invoice numbering
-- `nextInvoiceNumber` (convex/shop.ts:96) is a read-modify-write on a `meta` counter doc; concurrent saves can produce duplicate numbers.
-- Fix: use an atomic updater or a stronger uniqueness strategy.
+### 14. Non-atomic invoice numbering — ✅ DONE
+- `nextInvoiceNumber` (convex/shop.ts) read-modify-wrote the `meta.invoiceCounter` doc and used `.unique()` on the lookup; a missing/concurrent counter could throw or collide.
+- Fixed: the counter read-modify-write now runs inside one mutation against the shared counter doc (Convex's serialization point — concurrent saves retry on conflict so numbers don't repeat). Replaced `.unique()` with `.take(1)`, and when no counter doc exists the starting value is derived from the existing invoice count instead of a fresh `INV-0001`.
 
 ### 15. No real tests
 - Only `src/test/example.test.ts` (`expect(true).toBe(true)`).
