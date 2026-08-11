@@ -95,6 +95,13 @@ export default function CustomersPage({ onBack }: CustomersPageProps) {
             </div>
           </div>
 
+          {selectedCust.address && (
+            <div className="card-surface rounded-xl px-4 py-3 flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Address</span>
+              <span className="font-medium">{selectedCust.address}</span>
+            </div>
+          )}
+
           <div className="flex gap-1 bg-muted rounded-lg p-1">
             {(['history', ...(selectedCust.isElectrician ? ['clients'] : []), 'payments'] as const).map((tab) => (
               <LoadingButton
@@ -510,6 +517,7 @@ function CustomerForm({ customer, onSave, onClose }: { customer: Customer | null
     id: generateId(),
     name: '',
     phone: '',
+    address: null,
     isElectrician: false,
     creditLimit: 50000,
     totalCredit: 0,
@@ -539,6 +547,7 @@ function CustomerForm({ customer, onSave, onClose }: { customer: Customer | null
         <div className="space-y-3">
           <input placeholder="Customer name *" value={form.name} onChange={(event) => setField('name', event.target.value)} className="w-full px-3 py-2 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
           <input placeholder="Phone number" value={form.phone} onChange={(event) => setField('phone', event.target.value)} className="w-full px-3 py-2 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+          <input placeholder="Address (optional)" value={form.address ?? ''} onChange={(event) => setField('address', event.target.value || null)} className="w-full px-3 py-2 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
           <div className="flex items-center gap-2">
             <input type="checkbox" checked={form.isElectrician} onChange={(event) => setField('isElectrician', event.target.checked)} id="isElec" />
             <label htmlFor="isElec" className="text-sm">Electrician</label>

@@ -24,6 +24,7 @@ export interface Customer {
   id: string;
   name: string;
   phone: string;
+  address: string | null;
   isElectrician: boolean;
   creditLimit: number;
   totalCredit: number;

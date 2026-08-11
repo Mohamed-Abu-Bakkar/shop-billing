@@ -33,6 +33,7 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
   const [newClientAddress, setNewClientAddress] = useState('');
   const [newCustomerName, setNewCustomerName] = useState('');
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [newCustomerAddress, setNewCustomerAddress] = useState('');
   const [newCustomerIsElectrician, setNewCustomerIsElectrician] = useState(false);
   const [newCustomerCreditLimit, setNewCustomerCreditLimit] = useState('50000');
   const [searchFocused, setSearchFocused] = useState(false);
@@ -223,6 +224,7 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
       id: generateId(),
       name: newCustomerName.trim(),
       phone: newCustomerPhone.trim(),
+      address: newCustomerAddress.trim() || null,
       isElectrician: newCustomerIsElectrician,
       creditLimit: parseFloat(newCustomerCreditLimit) || 50000,
       totalCredit: 0,
@@ -233,6 +235,7 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
     setSelectedCustomerId(customer.id);
     setNewCustomerName('');
     setNewCustomerPhone('');
+    setNewCustomerAddress('');
     setNewCustomerIsElectrician(false);
     setNewCustomerCreditLimit('50000');
     setShowAddCustomer(false);
@@ -361,13 +364,14 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
                       <div className="text-xs font-semibold text-foreground">Add New Customer</div>
                       <input value={newCustomerName} onChange={(event) => setNewCustomerName(event.target.value)} placeholder="Customer name *" className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" autoFocus />
                       <input value={newCustomerPhone} onChange={(event) => setNewCustomerPhone(event.target.value)} placeholder="Phone *" className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+                      <input value={newCustomerAddress} onChange={(event) => setNewCustomerAddress(event.target.value)} placeholder="Address (optional)" className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
                       <div className="flex items-center gap-2">
                         <label className="text-xs text-muted-foreground">Electrician?</label>
                         <input type="checkbox" checked={newCustomerIsElectrician} onChange={(event) => setNewCustomerIsElectrician(event.target.checked)} className="rounded" />
                       </div>
                       <input value={newCustomerCreditLimit} onChange={(event) => setNewCustomerCreditLimit(event.target.value)} placeholder="Credit limit" type="number" className="w-full px-3 py-2 rounded-lg bg-card border border-input text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
                       <div className="flex justify-end gap-2">
-                        <LoadingButton onClick={() => { setNewCustomerName(''); setNewCustomerPhone(''); setNewCustomerIsElectrician(false); setNewCustomerCreditLimit('50000'); setShowAddCustomer(false); }} className="px-3 py-1.5 rounded-md text-xs bg-muted text-muted-foreground">Cancel</LoadingButton>
+                        <LoadingButton onClick={() => { setNewCustomerName(''); setNewCustomerPhone(''); setNewCustomerAddress(''); setNewCustomerIsElectrician(false); setNewCustomerCreditLimit('50000'); setShowAddCustomer(false); }} className="px-3 py-1.5 rounded-md text-xs bg-muted text-muted-foreground">Cancel</LoadingButton>
                         <LoadingButton onClick={() => void handleAddCustomer()} className="px-3 py-1.5 rounded-md text-xs bg-accent text-accent-foreground font-medium">Add Customer</LoadingButton>
                       </div>
                     </div>

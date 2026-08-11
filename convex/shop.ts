@@ -32,6 +32,7 @@ const customerValidator = v.object({
   id: v.string(),
   name: v.string(),
   phone: v.string(),
+  address: v.optional(v.union(v.string(), v.null())),
   isElectrician: v.boolean(),
   creditLimit: v.number(),
   totalCredit: v.number(),
