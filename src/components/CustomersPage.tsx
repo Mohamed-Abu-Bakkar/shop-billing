@@ -518,6 +518,7 @@ function CustomerForm({ customer, onSave, onClose }: { customer: Customer | null
     name: '',
     phone: '',
     address: null,
+    gstin: null,
     isElectrician: false,
     creditLimit: 50000,
     totalCredit: 0,

@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as gstin from "../gstin.js";
 import type * as seedData from "../seedData.js";
 import type * as shop from "../shop.js";
 
@@ -18,6 +19,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  gstin: typeof gstin;
   seedData: typeof seedData;
   shop: typeof shop;
 }>;

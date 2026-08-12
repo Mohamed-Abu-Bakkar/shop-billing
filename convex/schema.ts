@@ -23,12 +23,15 @@ export default defineSchema({
     name: v.string(),
     phone: v.string(),
     address: v.optional(v.union(v.string(), v.null())),
+    gstin: v.optional(v.union(v.string(), v.null())),
     isElectrician: v.boolean(),
     creditLimit: v.number(),
     totalCredit: v.number(),
     totalPaid: v.number(),
     behaviorScore: v.string(),
-  }).index("by_app_id", ["id"]),
+  })
+    .index("by_app_id", ["id"])
+    .index("by_gstin", ["gstin"]),
 
   invoices: defineTable({
     id: v.string(),

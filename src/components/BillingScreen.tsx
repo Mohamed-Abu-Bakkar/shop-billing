@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useMutation, useQuery } from 'convex/react';
+import { useAction, useMutation, useQuery } from 'convex/react';
+import { api } from '@convex/_generated/api';
 import { Client, Customer, Invoice, InvoiceItem, Item, PaymentMethod } from '@/types';
 import { generateId } from '@/lib/id';
-import { api } from '@convex/_generated/api';
 import { toast } from 'sonner';
 import BillTemplate from './BillTemplate';
 import { LoadingButton } from './ui/loading-button';
@@ -16,7 +16,7 @@ interface BillingScreenProps {
 }
 
 export default function BillingScreen({ onBack, items = [], customers = [], invoices = [], payments = [] }: BillingScreenProps) {
-  const [mode, setMode] = useState<'Retail' | 'Wholesale'>('Retail');
+  const [mode, setMode] = useState<'Retail' | 'Wholesale'>('Wholesale');
   const [templateType, setTemplateType] = useState<'bill' | 'quotation'>('bill');
   const [search, setSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
@@ -36,6 +36,18 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
   const [newCustomerAddress, setNewCustomerAddress] = useState('');
   const [newCustomerIsElectrician, setNewCustomerIsElectrician] = useState(false);
   const [newCustomerCreditLimit, setNewCustomerCreditLimit] = useState('50000');
+  const [gstSearch, setGstSearch] = useState('');
+  const [gstLookupLoading, setGstLookupLoading] = useState(false);
+  const [gstLookupError, setGstLookupError] = useState<string | null>(null);
+  const [gstLookupData, setGstLookupData] = useState<null | {
+    gstin: string;
+    legalName: string;
+    address: string;
+    city: string;
+    status: string;
+    stateCode: string | null;
+    existingCustomerId: string | null;
+  }>(null);
   const [searchFocused, setSearchFocused] = useState(false);
   const [isClickingItem, setIsClickingItem] = useState(false);
   const [savedInvoice, setSavedInvoice] = useState<Invoice | null>(null);
@@ -51,6 +63,7 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
   const createCustomer = useMutation(api.shop.createCustomer);
   const createClient = useMutation(api.shop.createClient);
   const createInvoice = useMutation(api.shop.createInvoice);
+  const lookupGstinAction = useAction(api.gstin.lookupGstin);
 
   useEffect(() => {
     searchRef.current?.focus();
@@ -225,6 +238,7 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
       name: newCustomerName.trim(),
       phone: newCustomerPhone.trim(),
       address: newCustomerAddress.trim() || null,
+      gstin: null,
       isElectrician: newCustomerIsElectrician,
       creditLimit: parseFloat(newCustomerCreditLimit) || 50000,
       totalCredit: 0,
@@ -268,6 +282,73 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
     toast.success(`Client "${client.name}" added`);
   };
 
+  const handleGstLookup = async () => {
+    const gstin = gstSearch.trim().toUpperCase();
+    if (!gstin) {
+      setGstLookupError('Enter a GST number');
+      setGstLookupData(null);
+      return;
+    }
+    setGstLookupLoading(true);
+    setGstLookupError(null);
+    setGstLookupData(null);
+    try {
+      const result = await lookupGstinAction({ gstin });
+      if (!result.ok) {
+        setGstLookupError(result.error);
+        return;
+      }
+      const existing = customers.find(
+        (customer) => customer.gstin && customer.gstin.toUpperCase() === result.data.gstin.toUpperCase(),
+      ) ?? null;
+      setGstLookupData({
+        gstin: result.data.gstin,
+        legalName: result.data.legalName,
+        address: result.data.address,
+        city: result.data.city,
+        status: result.data.status,
+        stateCode: result.data.stateCode,
+        existingCustomerId: existing ? existing.id : null,
+      });
+      if (existing) {
+        toast.success(`Found existing customer "${existing.name}"`);
+      }
+    } catch (err) {
+      setGstLookupError(err instanceof Error ? err.message : 'GSTIN lookup failed');
+    } finally {
+      setGstLookupLoading(false);
+    }
+  };
+
+  const handleCreateFromGst = async () => {
+    if (!gstLookupData) return;
+    const customer: Customer = {
+      id: generateId(),
+      name: gstLookupData.legalName || gstLookupData.gstin,
+      phone: '',
+      address: gstLookupData.address || null,
+      gstin: gstLookupData.gstin,
+      isElectrician: false,
+      creditLimit: 50000,
+      totalCredit: 0,
+      totalPaid: 0,
+      behaviorScore: 'Good',
+    };
+    await createCustomer({ customer });
+    setSelectedCustomerId(customer.id);
+    setGstSearch('');
+    setGstLookupData(null);
+    setGstLookupError(null);
+    toast.success(`Customer "${customer.name}" created from GSTIN`);
+  };
+
+  const handleSelectGstCustomer = (id: string) => {
+    setSelectedCustomerId(id);
+    setGstSearch('');
+    setGstLookupData(null);
+    setGstLookupError(null);
+  };
+
   return (
     <div className="h-screen flex flex-col animate-slide-in">
       <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card">
@@ -291,18 +372,18 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
             </LoadingButton>
           </div>
 
-          <LoadingButton
+          {/* <LoadingButton
             onClick={() => setMode('Retail')}
             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${mode === 'Retail' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
           >
             Retail
-          </LoadingButton>
-          <LoadingButton
+          </LoadingButton> */}
+          {/* <LoadingButton
             onClick={() => { setMode('Wholesale'); setTimeout(() => customerSearchRef.current?.focus(), 100); }}
             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${mode === 'Wholesale' ? 'bg-accent text-accent-foreground' : 'bg-muted text-muted-foreground'}`}
           >
             Wholesale <kbd className="hotkey ml-1">Alt+W</kbd>
-          </LoadingButton>
+          </LoadingButton> */}
         </div>
       </div>
 
@@ -344,6 +425,70 @@ export default function BillingScreen({ onBack, items = [], customers = [], invo
                         />
                         <LoadingButton onClick={() => setShowAddCustomer(true)} className="px-2 py-2 rounded-lg bg-accent text-accent-foreground text-xs font-medium whitespace-nowrap">+ New</LoadingButton>
                       </div>
+
+                      <div className="flex items-center gap-2 mt-2">
+                        <input
+                          value={gstSearch}
+                          onChange={(event) => { setGstSearch(event.target.value.toUpperCase()); setGstLookupError(null); setGstLookupData(null); }}
+                          onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); void handleGstLookup(); } }}
+                          placeholder="Or search by GSTIN (e.g. 33ABCDE1234F1Z5)"
+                          className="flex-1 px-3 py-2 rounded-lg bg-card border border-input text-sm mono-num focus:outline-none focus:ring-2 focus:ring-accent"
+                        />
+                        <LoadingButton
+                          onClick={() => void handleGstLookup()}
+                          disabled={gstLookupLoading || !gstSearch.trim()}
+                          className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium whitespace-nowrap disabled:opacity-50"
+                        >
+                          {gstLookupLoading ? 'Fetching...' : 'Fetch'}
+                        </LoadingButton>
+                      </div>
+
+                      {gstLookupError && (
+                        <div className="mt-1 px-3 py-2 rounded-lg bg-danger/10 text-danger text-xs">{gstLookupError}</div>
+                      )}
+
+                      {gstLookupData && (
+                        <div className="mt-2 p-3 rounded-lg border border-border bg-muted/30 text-sm space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-semibold truncate">{gstLookupData.legalName || gstLookupData.gstin}</span>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                              gstLookupData.status.toLowerCase() === 'active' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'
+                            }`}>
+                              {gstLookupData.status || 'Unknown'}
+                            </span>
+                          </div>
+                          <div className="text-xs text-muted-foreground mono-num">{gstLookupData.gstin}</div>
+                          {gstLookupData.address && (
+                            <div className="text-xs text-muted-foreground">{gstLookupData.address}</div>
+                          )}
+                          {gstLookupData.existingCustomerId ? (
+                            <div className="flex justify-end">
+                              <LoadingButton
+                                onClick={() => handleSelectGstCustomer(gstLookupData.existingCustomerId!)}
+                                className="px-3 py-1.5 rounded-md text-xs bg-success text-success-foreground font-medium"
+                              >
+                                Use existing customer
+                              </LoadingButton>
+                            </div>
+                          ) : (
+                            <div className="flex justify-end gap-2">
+                              <LoadingButton
+                                onClick={() => { setGstLookupData(null); setGstSearch(''); }}
+                                className="px-3 py-1.5 rounded-md text-xs bg-muted text-muted-foreground"
+                              >
+                                Dismiss
+                              </LoadingButton>
+                              <LoadingButton
+                                onClick={() => void handleCreateFromGst()}
+                                className="px-3 py-1.5 rounded-md text-xs bg-accent text-accent-foreground font-medium"
+                              >
+                                + Create customer
+                              </LoadingButton>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {filteredCustomers.length > 0 && (
                         <div className="mt-1 card-elevated rounded-lg max-h-40 overflow-y-auto">
                           {filteredCustomers.map((customer) => (

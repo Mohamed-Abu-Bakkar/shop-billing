@@ -1,19 +1,20 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from 'convex/react';
-import { Invoice, Item } from '@/types';
+import { Invoice, Item, Customer } from '@/types';
 import { api } from '@convex/_generated/api';
 import { store } from '@/lib/store';
 import { toast } from 'sonner';
 import { LoadingButton } from './ui/loading-button';
 
 interface BillTemplateProps {
+  customer: Customer;
   invoice: Invoice;
   onClose: () => void;
   onDelete?: (invoice: Invoice) => void;
   type?: 'bill' | 'quotation';
 }
 
-export default function BillTemplate({ invoice, onClose, onDelete, type = 'bill' }: BillTemplateProps) {
+export default function BillTemplate({ customer, invoice, onClose, onDelete, type = 'bill' }: BillTemplateProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const items = (useQuery(api.shop.listItems, {}) ?? []) as Item[];
   const deleteInvoice = useMutation(api.shop.deleteInvoice);
@@ -176,9 +177,11 @@ export default function BillTemplate({ invoice, onClose, onDelete, type = 'bill'
             <div className="">
               {type === 'bill' && (
                 // make the below container centered vertically with the invoice details on the right
-                <div className="flex flex-col justify-center ">
+                <div className="flex justify-between ">
                   <h1 className="text-3xl font-bold text-primary mb-2">{store.name}</h1>
-                  
+                  <div className="text font-bold text-primary mb-2">
+                    {type === 'quotation' ? 'QUOTATION' : invoice.invoiceNo}
+                  </div>
                 </div>
               )}
               {type === 'quotation' && (
@@ -194,6 +197,7 @@ export default function BillTemplate({ invoice, onClose, onDelete, type = 'bill'
                   <p className="text-sm text-gray-500">Phone: {store.phone}</p>
                   <p className="text-sm text-gray-500">Email: {store.email}</p>
                 </div>
+                
                 <div className="">
                  
                   <div className="text-sm text-gray-600">
@@ -221,6 +225,9 @@ export default function BillTemplate({ invoice, onClose, onDelete, type = 'bill'
                 {invoice.customerName ? (
                   <>
                     <p className="font-semibold text-gray-900">{invoice.customerName}</p>
+                    <p className="text-sm text-gray-600">
+                       {customer.gstin ? customer.gstin : 'N/A'}
+                    </p>
                     {/* {type === 'bill' && invoice.customerId && (
                       <p className="text-sm text-gray-600">
                         Customer ID: {invoice.customerId}
@@ -235,9 +242,7 @@ export default function BillTemplate({ invoice, onClose, onDelete, type = 'bill'
                     <span className="font-medium">Client:</span> {invoice.buyingForClient}
                   </p>
                 )}
-                 <div className="text font-bold text-primary mb-2">
-                    {type === 'quotation' ? 'QUOTATION' : invoice.invoiceNo}
-                  </div>
+                 
               </div>
             </div>
             <div>
@@ -425,46 +430,6 @@ export default function BillTemplate({ invoice, onClose, onDelete, type = 'bill'
             >
               Print Bill
             </LoadingButton>
-            {/* <button
-              onClick={() => {
-                const printWindow = window.open('', '_blank');
-                if (printWindow) {
-                  const billContent = document.getElementById('bill-template')?.innerHTML || '';
-                  printWindow.document.write(`
-                    <!DOCTYPE html>
-                    <html>
-                      <head>
-                        <title>Invoice ${invoice.invoiceNo}</title>
-                        <style>
-                          @page { margin: 0.5in; size: A4; }
-                          body { font-family: Arial, sans-serif; font-size: 12px; line-height: 1.4; color: black; background: white; }
-                          table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
-                          th, td { border: 1px solid #000; padding: 0.5rem; text-align: left; }
-                          th { background: #f5f5f5; font-weight: bold; }
-                          .text-right { text-align: right; }
-                          .text-center { text-align: center; }
-                          .font-bold { font-weight: bold; }
-                          .border-b-2 { border-bottom: 2px solid #000; }
-                          .pb-6 { padding-bottom: 1.5rem; }
-                          .mb-6 { margin-bottom: 1.5rem; }
-                          .grid-cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
-                          .text-3xl { font-size: 1.875rem; }
-                          .text-4xl { font-size: 2.25rem; }
-                        </style>
-                      </head>
-                      <body>
-                        ${billContent}
-                      </body>
-                    </html>
-                  `);
-                  printWindow.document.close();
-                  printWindow.print();
-                }
-              }}
-              className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
-            >
-              Print to PDF
-            </button> */}
           </div>
         </div>
       </div>

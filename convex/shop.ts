@@ -33,6 +33,7 @@ const customerValidator = v.object({
   name: v.string(),
   phone: v.string(),
   address: v.optional(v.union(v.string(), v.null())),
+  gstin: v.optional(v.union(v.string(), v.null())),
   isElectrician: v.boolean(),
   creditLimit: v.number(),
   totalCredit: v.number(),
@@ -193,6 +194,17 @@ export const listCustomers = query({
   handler: async (ctx) => {
     const customers = await ctx.db.query("customers").collect();
     return customers.sort((a, b) => a.name.localeCompare(b.name));
+  },
+});
+
+export const findCustomerByGstin = query({
+  args: { gstin: v.string() },
+  handler: async (ctx, { gstin }) => {
+    const normalized = gstin.trim().toUpperCase();
+    return await ctx.db
+      .query("customers")
+      .withIndex("by_gstin", (q) => q.eq("gstin", normalized))
+      .first();
   },
 });
 

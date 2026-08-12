@@ -161,6 +161,7 @@ export const seedCustomers: SeedCustomer[] = [
     name: "Gopal Electricals",
     phone: "9876543212",
     address: "8, Commercial Street, Coimbatore",
+    gstin: "33ABCDE1234F1Z5",
     isElectrician: false,
     creditLimit: 100000,
     totalCredit: 0,
