@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { LoadingButton } from './ui/loading-button';
 
 interface BillTemplateProps {
-  customer: Customer;
+  customer?: Customer | null;
   invoice: Invoice;
   onClose: () => void;
   onDelete?: (invoice: Invoice) => void;
@@ -16,9 +16,11 @@ interface BillTemplateProps {
 
 export default function BillTemplate({ customer, invoice, onClose, onDelete, type = 'bill' }: BillTemplateProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const customers = (useQuery(api.shop.listCustomers, {}) ?? []) as Customer[];
   const items = (useQuery(api.shop.listItems, {}) ?? []) as Item[];
   const deleteInvoice = useMutation(api.shop.deleteInvoice);
   const hasDiscount = invoice.items.some(item => item.discount > 0);
+  const resolvedCustomer = customer ?? (invoice.customerId ? customers.find((c) => c.id === invoice.customerId) ?? null : null);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-IN', {
@@ -180,7 +182,7 @@ export default function BillTemplate({ customer, invoice, onClose, onDelete, typ
                 <div className="flex justify-between ">
                   <h1 className="text-3xl font-bold text-primary mb-2">{store.name}</h1>
                   <div className="text font-bold text-primary mb-2">
-                    {type === 'quotation' ? 'QUOTATION' : invoice.invoiceNo}
+                    {invoice.invoiceNo}
                   </div>
                 </div>
               )}
@@ -226,7 +228,10 @@ export default function BillTemplate({ customer, invoice, onClose, onDelete, typ
                   <>
                     <p className="font-semibold text-gray-900">{invoice.customerName}</p>
                     <p className="text-sm text-gray-600">
-                       {customer.gstin ? customer.gstin : 'N/A'}
+                      {resolvedCustomer?.address ? resolvedCustomer.address : 'N/A'}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                       {resolvedCustomer?.gstin ? resolvedCustomer.gstin : 'N/A'}
                     </p>
                     {/* {type === 'bill' && invoice.customerId && (
                       <p className="text-sm text-gray-600">
