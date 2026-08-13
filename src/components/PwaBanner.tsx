@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Download, RefreshCw, WifiOff, X } from "lucide-react";
-import { useRegisterSW } from "virtual:pwa-register/react";
+import { Workbox } from "workbox-window";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,9 +14,6 @@ type BeforeInstallPromptEvent = Event & {
 
 const DISMISS_KEY = "cusp-tech-pwa-banner-dismissed";
 const INSTALL_SNOOZE_KEY = "cusp-tech-pwa-install-snoozed";
-
-const readHookValue = (value: boolean | [boolean, Dispatch<SetStateAction<boolean>>]) =>
-  Array.isArray(value) ? value[0] : value;
 
 export default function PwaBanner() {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
@@ -35,17 +32,28 @@ export default function PwaBanner() {
 
     return window.localStorage.getItem(DISMISS_KEY) === "1";
   });
-
-  const swState = useRegisterSW({
-    immediate: !import.meta.env.DEV,
-    onRegisteredSW() {
-      // The generated service worker is active and caching the app shell.
-    },
-  });
-  const needRefresh = readHookValue(swState.needRefresh);
-  const updateServiceWorker = swState.updateServiceWorker;
+  const [needRefresh, setNeedRefresh] = useState(false);
+  const [workbox, setWorkbox] = useState<Workbox | null>(null);
 
   useEffect(() => {
+    if (!import.meta.env.DEV && "serviceWorker" in navigator) {
+      const wb = new Workbox(`${import.meta.env.BASE_URL}sw.js`, { scope: import.meta.env.BASE_URL });
+
+      wb.addEventListener("waiting", () => {
+        setNeedRefresh(true);
+      });
+
+      wb.addEventListener("controlling", () => {
+        window.location.reload();
+      });
+
+      wb.register().catch(() => {
+        // Ignore registration failures; the app still works without SW.
+      });
+
+      setWorkbox(wb);
+    }
+
     const onBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       if (window.sessionStorage.getItem(INSTALL_SNOOZE_KEY) === "1") {
@@ -151,7 +159,7 @@ export default function PwaBanner() {
 
               <div className="mt-4 flex flex-wrap gap-2">
                 {needRefresh ? (
-                  <Button type="button" size="sm" onClick={() => updateServiceWorker(true)}>
+                  <Button type="button" size="sm" onClick={() => workbox?.messageSkipWaiting()}>
                     Refresh now
                   </Button>
                 ) : null}
