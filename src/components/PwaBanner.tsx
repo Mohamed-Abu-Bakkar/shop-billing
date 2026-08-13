@@ -23,7 +23,7 @@ export default function PwaBanner() {
       return false;
     }
 
-    return window.sessionStorage.getItem(INSTALL_SNOOZE_KEY) === "1";
+    return window.localStorage.getItem(INSTALL_SNOOZE_KEY) === "1";
   });
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window === "undefined") {
@@ -56,7 +56,7 @@ export default function PwaBanner() {
 
     const onBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
-      if (window.sessionStorage.getItem(INSTALL_SNOOZE_KEY) === "1") {
+      if (window.localStorage.getItem(INSTALL_SNOOZE_KEY) === "1") {
         return;
       }
 
@@ -105,7 +105,7 @@ export default function PwaBanner() {
 
     setInstallSnoozed(true);
     setDismissed(true);
-    window.sessionStorage.setItem(INSTALL_SNOOZE_KEY, "1");
+    window.localStorage.setItem(INSTALL_SNOOZE_KEY, "1");
   };
 
   const handleInstall = async () => {
@@ -119,7 +119,7 @@ export default function PwaBanner() {
     if (choice.outcome === "accepted") {
       setDismissed(true);
       window.localStorage.setItem(DISMISS_KEY, "1");
-      window.sessionStorage.removeItem(INSTALL_SNOOZE_KEY);
+      window.localStorage.removeItem(INSTALL_SNOOZE_KEY);
     }
 
     setInstallPrompt(null);

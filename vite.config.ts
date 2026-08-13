@@ -20,7 +20,7 @@ export default defineConfig({
       manifest: {
         name: `${store.name} Billing PWA`,
         short_name: "Sri Mahalingam Billing",
-        description: `${store.appDescription} ${store.brandByline}`,
+        description: `${store.appDescription} ${store.partnerByline}`,
         theme_color: "#0f172a",
         background_color: "#f8fafc",
         display: "standalone",
