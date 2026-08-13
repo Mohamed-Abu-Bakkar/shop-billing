@@ -10,6 +10,7 @@ import CustomersPage from '@/components/CustomersPage';
 import ReportsPage from '@/components/ReportsPage';
 import PaymentsPage from '@/components/PaymentsPage';
 // import InvoicesPage from '@/components/InvoicesPage';
+import { Badge } from '@/components/ui/badge';
 
 type Page = 'dashboard' | 'billing' | 'inventory' | 'customers' | 'reports' | 'payments' | 'invoices';
 
@@ -60,9 +61,16 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card px-4 py-3 flex items-center justify-between">
-        <h1 className="heading text-lg tracking-tight">{store.name}</h1>
-        <span className="text-xs text-muted-foreground">{store.tagline}</span>
+      <header className="border-b border-border bg-card px-4 py-3 flex items-center justify-between gap-4">
+        <div>
+          <h1 className="heading text-lg tracking-tight">{store.name}</h1>
+          <p className="text-xs text-muted-foreground">{store.tagline}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="rounded-full px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.18em]">
+            by {store.partnerName}
+          </Badge>
+        </div>
       </header>
       <Dashboard invoices={invoices} items={items} customerCount={customerCount} itemCount={itemCount} onNavigate={(p) => setPage(p as Page)} />
     </div>

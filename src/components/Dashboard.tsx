@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Invoice, Item } from '@/types';
 import { LoadingButton } from './ui/loading-button';
 import BillTemplate from './BillTemplate';
+import { store } from '@/lib/store';
 
 interface DashboardProps {
   invoices?: Invoice[];
@@ -117,6 +118,28 @@ export default function Dashboard({ invoices = [], items = [], customerCount, it
             ))}
           </div>
         )}
+      </div>
+
+      <div className="card-surface rounded-xl p-4 md:p-5">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-start gap-3">
+            <img src="/fav.ico" alt="Logo" className="h-10 w-10 shrink-0 rounded-xl" />
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="heading text-sm">{store.partnerName}</span>
+                <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  Product experience
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {store.partnerByline}
+              </p>
+            </div>
+          </div>
+          <p className="max-w-xl text-xs leading-5 text-muted-foreground md:text-right">
+            Fast billing workflows, offline caching, installability, and a polished retail experience built to feel native on desktop and mobile.
+          </p>
+        </div>
       </div>
 
       {selectedInvoice && (

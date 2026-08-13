@@ -1,0 +1,29 @@
+{
+	"name": "Sri Mahalingam Electricals Billing",
+	"short_name": "SME Billing",
+	"description": "A production-ready billing and inventory PWA for electrical and plumbing retail, designed in partnership with Cusp Tech.",
+	"start_url": "/",
+	"scope": "/",
+	"display": "standalone",
+	"display_override": ["standalone", "window-controls-overlay"],
+	"background_color": "#f8fafc",
+	"theme_color": "#0f172a",
+	"lang": "en-IN",
+	"dir": "ltr",
+	"icons": [
+		{
+			"src": "/pwa-192x192.png",
+			"sizes": "192x192",
+			"type": "image/svg+xml",
+			"purpose": "any"
+		},
+		{
+			"src": "/pwa-512x512.png",
+			"sizes": "512x512",
+			"type": "image/svg+xml",
+			"purpose": "any maskable"
+		}
+	],
+	"categories": ["business", "productivity", "finance"],
+	"prefer_related_applications": false
+}

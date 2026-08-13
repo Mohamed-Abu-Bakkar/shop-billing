@@ -1,6 +1,15 @@
 # Shop Billing App
 
-https://vgp-shop.vercel.app 
+Sri Mahalingam Electricals Billing is a production-ready PWA for billing, inventory, customers, and collections.
+
+Brand experience: designed and developed in partnership with Cusp Tech.
+
+Live preview: https://mahalingam-electricals.cusptech.dev/
+
+PWA highlights:
+- Installable on desktop and mobile
+- Offline-ready app shell and auto-updating service worker
+- Branded metadata, icons, and app shortcuts for a more native feel
 
 .env for test
 
